@@ -26,6 +26,35 @@
   saved data blocks startup without clearing/replacing storage.
 - Alex/Chris are first-run players only. More players can be added with zero XP;
   no default tasks are automatically added to an existing or new extra profile.
+- Every fresh load starts at explicit profile choice (no saved/default selection).
+  Empty families show parent setup, not a placeholder child. Child switching,
+  including tapping the current child, locks parent controls, closes dialogs and
+  returns to Today. Adding/archiving/restoring a profile never silently selects
+  another. Parent is a prominent entry choice: PIN opens Admin with no child
+  selected. Exit Admin returns to the selected child or, with none, the chooser.
+  Parent-only rename keeps profile IDs/balances/history; never rewrite saved
+  names to match the first-run Alex/Chris defaults.
+- Players are archived/restored only by an unlocked parent, never deleted.
+  Archive confirmation names the player and explains that no data is removed.
+  Archived players remain in Admin but not child choosers or assignment targets.
+  Skip their chores in rollover, required-day registration and bonus queuing;
+  block their chore submissions, earnings, misses, spending and manual adjustments.
+  Preserve chores, balances, ledgers and requests. Parents may still settle or
+  refund existing redemption requests. On restore, outdated recurring instances
+  become history (pending reviews retain dates) and resume in the current period
+  without catch-up losses/awards; past active scheduled sessions expire free.
+  Same-period work retains its state, preventing repeat awards. Shared conflicts
+  still block payout until resolved. Archiving the last active player is allowed:
+  Parent entry always provides an add/restore path, including after reload.
+- Today groups required, assigned optional, scheduled and pending chores. History
+  is secondary. Children may explicitly choose small optional personal catalog
+  templates only (not mandatory, scheduled, bonus or parent-reviewed/high-value).
+  Daily/weekly choices repeat until parent deletion; one award per period.
+  On-demand personal choices are limited to one choice/completion day and no
+  outstanding active/pending duplicate. Reading exclusivity remains in force.
+  Ask parent is an in-person PIN handoff, not a stored request: after unlock it
+  opens the chosen template/child in Admin for deliberate deployment. Cancelling
+  or switching child clears this handoff. Shared ownership is never self-claimed.
 - Templates have `points` (lifetime XP), `coins`, nominal `penalty`, `cadence`
   (daily/weekly/on-demand), `ownership` (personal/shared), `mandatory`,
   `requiresReview`, title and emoji. `seed` enables first-run daily deployment;
@@ -34,8 +63,9 @@
 - First run seeds only daily pet/household/tidying tasks and optional reading.
   Personal tasks are per player; shared tasks have ONE named owner, never an
   `all` fanout. Alex gets cat/table; Chris gets dishwasher/trash. Baseline Coins
-  are 80/95 per day, plus optional reading or extra work. Weekly vacuuming and
-  on-demand cooking/training require explicit parent template deployment.
+  are 80/95 per day, plus optional reading or extra work. Shared weekly vacuuming and
+  shared cooking/training require explicit parent template deployment; small
+  personal optional choices can be selected by the child.
 - Parent Admin deploys source templates individually for existing families too.
   Shared jobs cannot be duplicated across players for a period or while pending.
   Daily/weekly deployments repeat for the chosen owner until deleted; no
@@ -98,3 +128,11 @@
 - Before first legacy rewrite, retain the exact old JSON once at
   `chore_quest_gamer_data_legacy_backup`. Never clear storage to recover from an
   error. Export/back up before repairing data or deliberately reseeding.
+- There is no backend: `catalog.json` is static source/default data and cannot
+  be written by the app. Saved browser snapshots always take precedence.
+  Prototype-only exception to retaining storage: unlocked Parent Admin may
+  deliberately use **Reset prototype data**, after an irreversible all-data
+  warning and typing `RESET`. Remove ONLY `chore_quest_gamer_data` and
+  `chore_quest_gamer_data_legacy_backup`, then reload from current catalog defaults
+  (Alex/Chris, PIN 1234). Never use localStorage.clear(). Report storage failures
+  honestly, including possible partial removal; never claim reset succeeded then.

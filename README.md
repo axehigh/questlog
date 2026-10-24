@@ -21,17 +21,74 @@ not synced between devices or copied from localhost to the published site.
 
 ## Prototype catalog and economy
 
+### Start here
+
+1. Each time the page loads, choose **Alex**, **Chris** or **Parent** (saved
+   families keep their actual names). Parent enters PIN **1234** by default and
+   opens Admin without a child selected. Parent can add a player or restore an
+   archived one, then exit Admin to the chooser. Saved names are authoritative;
+   use Parent → Manage Players → **Rename** to change an old name without losing
+   its balances/history. No player is silently renamed or selected.
+2. **My chores → Today** shows required work first, then optional chores already
+   assigned to you, scheduled sessions and anything waiting for a parent check.
+   Do the work, then tap **I did it**. Coins buy rewards; lifetime XP is a permanent
+   record, not spending money. Past chores are under the secondary history menu.
+3. **Choose an extra chore** shows the source catalog with clear availability.
+   Small optional personal tasks (own-room vacuuming, simple meal prep, reading)
+   can be chosen directly. Daily/weekly choices repeat until a parent removes
+   them, at most once per period. Personal on-demand choices allow one per local
+   day (including a completion that day), with no previous active/pending job.
+   Meal prep assumes a parent has already agreed it is safe for that child;
+   the prototype has no age or kitchen-safety profile settings.
+4. **Ask parent to assign** is an in-person handoff: enter Parent PIN, check the
+   preselected template and child in Admin, and deliberately deploy it. It does
+   not pay anything or create a stored request. Shared jobs, mandatory chores,
+   training and high-value/reviewed work cannot be self-assigned. Someone else’s
+   job is labelled with its owner, never offered for claiming.
+5. Parents unlock into Admin. Review is explicitly scoped to the selected child;
+   reward requests show all children. Switching profiles always locks Admin,
+   closes dialogs and returns to the new child’s Today. Reenter the PIN to review.
+   Active child choices remain available in Parent Admin too. **Exit Admin** locks
+   controls and returns to the selected child, or to the chooser if none is selected.
+
+### Keep players safely: archive and restore
+
+In unlocked Parent Admin, **Archive…** asks for deliberate confirmation naming
+the player. It does not delete any data: XP, Coins, chores, ledgers, reading
+records and redemption history remain. Archived players disappear from the
+child chooser and assignment targets; their chores do not recur, auto-miss,
+earn or incur penalties, and they cannot submit work or spend Coins. Parents
+can still fulfill or decline/refund existing reward requests in Rewards.
+
+**Restore** is explicit in Manage Players and selects no child automatically.
+Same-day/week work keeps its existing state. When a recurring period has passed,
+the old instance stays in history (unsubmitted work expires free; pending reviews
+retain original dates), and daily/weekly work resumes in the current period.
+There are no backfilled awards or catch-up penalties for archived time. Past
+scheduled sessions expire free; unscheduled one-off work remains available.
+Shared assignments restored alongside another owner's job still cannot pay
+twice; resolve conflicts before approval. Archive does not erase earlier misses
+or manufacture streak days. Even if every player is archived, **Parent** remains
+on the entry screen so a parent can restore or add someone.
+
+Choosing is explicit: saved deletions and empty collections are not automatically
+restored. Choosing a catalog task adds only that task and never reprices an
+existing assignment. Use **Rewards** to request a reward with available Coins.
+
 `catalog.json` contains the exact 17 source task names/face values, starter
 profiles **Alex and Chris**, and configurable reward prices. Existing families
 keep their players, balances, customized collections (even empty lists), history
 and pending reward price snapshots. Editing this file never replaces saved data.
+There is **no backend**: this JSON file is static defaults, not a writable server
+database. The app saves browser-local copies and does not edit catalog.json.
 
 - **Lifetime XP** is nonspendable and never reduced. **Coins** buy rewards. No
   ranks, rank bars/badges, rank bonuses or compounding multipliers remain.
 - First use seeds daily personal tidying and optional 15/30-minute reading,
   plus single-owner household jobs: Alex handles cat care/table; Chris handles
   dishwasher/trash. Baseline earnings are 80/95 Coins/day, plus optional reading
-  and extras. More players are supported; deploy personal templates for them.
+  and extras. More players are supported; parents deploy required tasks, while
+  children can explicitly choose small optional personal templates.
 - Unlock Parent PIN (`1234`), open Admin, select a **Source Catalog** template
   and **one target player**, then Deploy. This works for existing installations
   without resetting anything. Shared tasks pay only one player per job/period;
@@ -42,7 +99,7 @@ and pending reward price snapshots. Editing this file never replaces saved data.
   owner; an already completed job blocks another payout for that period.
 - Pet care/tidying/household jobs recur daily. Own-room vacuuming is weekly per
   player; each shared vacuum area must be explicitly assigned weekly. Weekly
-  periods are local Monday–Sunday. Cooking is deployed once per actual job;
+  periods are local Monday–Sunday. Shared cooking is deployed once per actual job;
   training is a single parent-scheduled session, never a mandatory daily.
 - Choose **15 OR 30 minutes** of reading per player/local day, not both.
   A pending submission reserves the choice. Five distinct completed/approved
@@ -86,6 +143,22 @@ re-addition occurs. Invalid source/saved data blocks startup: back up/export
 storage before repairing, never clear it as error recovery. This is a local
 shared-device prototype, not secure authentication: PIN, dates and storage can
 be manipulated. There is no sync or server-side verification.
+
+### Deliberately restart the prototype
+
+Choose **Parent**, enter the saved PIN, then in Admin use **Reset prototype data**.
+Read the irreversible-loss warning and type exactly **RESET**; Cancel or anything
+else changes nothing. This removes **all** Chore Quest browser-saved profiles
+(active and archived), XP/Coins, chores, custom catalog/reward copies, history,
+requests, saved PIN and the legacy backup. Back up/export anything wanted first.
+Only `chore_quest_gamer_data` and `chore_quest_gamer_data_legacy_backup` are
+removed—unrelated localStorage keys are untouched. The page reloads and starts
+from the current catalog.json: **Alex/Chris**, current tasks/reward defaults and
+PIN **1234**. Use this only for an intentional fresh prototype, not error recovery.
+If storage removal fails, the app reports failure (some keys may already have
+been removed) rather than claiming success; stop and check/back up remaining
+storage before continuing. Reset applies only to this browser/site, not other
+devices, and cannot change the source JSON.
 
 ## Local prototype use
 

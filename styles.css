@@ -43,3 +43,16 @@
             background: rgba(18, 24, 38, 0.85);
             backdrop-filter: blur(12px);
         }
+
+        button, summary { touch-action: manipulation; }
+        button { min-height: 44px; }
+        button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-visible {
+            outline: 3px solid #67e8f9;
+            outline-offset: 3px;
+        }
+        [tabindex="-1"]:focus { outline: none; }
+        .chore-card { flex-wrap: wrap; }
+        .chore-card > :first-child { min-width: 190px; }
+        .chore-card > :last-child { margin-left: auto; }
+        #kid-selector-bar button { flex-shrink: 0; }
+        [role="dialog"] > div { max-height: 90dvh; overflow-y: auto; }
