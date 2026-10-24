@@ -14,6 +14,8 @@
     {"id":"vacuum-stairs","title":"Vacuum Stairs","points":50,"coins":50,"penalty":30,"emoji":"🧹","cadence":"weekly","ownership":"shared","mandatory":false,"requiresReview":false},
     {"id":"vacuum-gaming","title":"Vacuum Downstairs Gaming Room","points":50,"coins":50,"penalty":30,"emoji":"🧹","cadence":"weekly","ownership":"shared","mandatory":false,"requiresReview":false},
     {"id":"vacuum-tv","title":"Vacuum Downstairs TV Room","points":50,"coins":50,"penalty":30,"emoji":"🧹","cadence":"weekly","ownership":"shared","mandatory":false,"requiresReview":false},
+    {"id":"wash-toilet-upstairs","title":"Wash Toilet Upstairs","points":50,"coins":50,"penalty":30,"emoji":"🚽","cadence":"weekly","ownership":"shared","mandatory":false,"requiresReview":false},
+    {"id":"wash-floor-bathroom-downstairs","title":"Wash Floor in Bathroom Downstairs","points":50,"coins":50,"penalty":30,"emoji":"🧽","cadence":"weekly","ownership":"shared","mandatory":false,"requiresReview":false},
     {"id":"simple-meal","title":"Prep Simple Meal / Lunch","points":40,"coins":40,"penalty":0,"emoji":"🥪","cadence":"on-demand","ownership":"personal","mandatory":false,"requiresReview":false},
     {"id":"bread","title":"Bake Bread","points":100,"coins":100,"penalty":0,"emoji":"🍞","cadence":"on-demand","ownership":"shared","mandatory":false,"requiresReview":true},
     {"id":"family-dinner","title":"Cook Family Dinner","points":120,"coins":120,"penalty":0,"emoji":"🍳","cadence":"on-demand","ownership":"shared","mandatory":false,"requiresReview":true},

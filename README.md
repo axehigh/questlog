@@ -75,7 +75,7 @@ Choosing is explicit: saved deletions and empty collections are not automaticall
 restored. Choosing a catalog task adds only that task and never reprices an
 existing assignment. Use **Rewards** to request a reward with available Coins.
 
-`catalog.json` contains the exact 17 source task names/face values, starter
+`catalog.json` contains the exact 19 source task names/face values, starter
 profiles **Alex and Chris**, and configurable reward prices. Existing families
 keep their players, balances, customized collections (even empty lists), history
 and pending reward price snapshots. Editing this file never replaces saved data.

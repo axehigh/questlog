@@ -20,7 +20,7 @@
 
 ## Catalog and runtime rules
 
-- `catalog.json` owns source profiles, all 17 task templates and reward prices.
+- `catalog.json` owns source profiles, all 19 task templates and reward prices.
   Use unique alphanumeric/hyphen/underscore IDs and whole nonnegative amounts;
   reward cost is positive and tier is 1/2/3 (Micro/Mid/Major). Invalid source or
   saved data blocks startup without clearing/replacing storage.
