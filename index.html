@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chore Quest - Gamer Edition</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+    <script src="tailwind.config.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="pb-24 md:pb-6 antialiased">
+
+    <!-- App Main Container -->
+    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative bg-darkbg border-x border-darkborder shadow-2xl overflow-hidden min-w-[320px]">
+
+        <!-- TOP HEADER -->
+        <header class="bg-gradient-to-r from-darkcard via-slate-900 to-darkcard p-4 pt-5 border-b border-darkborder relative z-10">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center space-x-2.5">
+                    <div class="bg-valored/20 p-2 rounded-xl border border-valored/40 text-valored glow-red">
+                        <i data-lucide="gamepad-2" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-wider text-white leading-none flex items-center gap-1.5">
+                            CHORE QUEST <span class="text-[10px] bg-valored text-white px-1.5 py-0.5 rounded font-extrabold tracking-widest">SQUAD</span>
+                        </h1>
+                        <p class="text-[11px] text-slate-400 mt-0.5" id="mode-subtitle">Gamer Player Zone</p>
+                    </div>
+                </div>
+
+                <!-- Parent/Kid Mode Toggle Switch -->
+                <button onclick="toggleParentMode()" id="mode-toggle-btn" class="flex items-center space-x-1.5 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-200 transition-all btn-bounce">
+                    <i data-lucide="shield" class="w-3.5 h-3.5 text-neoncyan"></i>
+                    <span id="mode-btn-text">Parent PIN</span>
+                </button>
+            </div>
+
+            <!-- Player Switcher Bar -->
+            <div id="kid-selector-bar" class="flex space-x-2.5 overflow-x-auto pt-1 pb-1 no-scrollbar">
+                <!-- Dynamic Gamer Profiles inserted here -->
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 p-4 space-y-4 overflow-y-auto">
+
+            <!-- VIEW: QUESTS (CHORES) -->
+            <section id="view-chores" class="space-y-4">
+
+                <!-- Lifetime XP & Coins Banner -->
+                <div id="kid-hero-card" class="bg-gradient-to-br from-darkcard to-slate-900 rounded-2xl p-4 border border-darkborder relative overflow-hidden shadow-lg">
+                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-valored/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                    <div class="flex justify-between items-start relative z-10">
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <span id="hero-avatar" class="text-3xl bg-slate-800 p-2.5 rounded-2xl border border-slate-700 block">🎮</span>
+                            </div>
+                            <div>
+                                <h2 id="hero-name" class="text-lg font-bold text-white font-heading tracking-wide">Alex</h2>
+                                <div class="flex items-center space-x-2 mt-0.5">
+                                    <span class="text-[10px] bg-slate-800 text-amber-400 font-bold px-2 py-0.5 rounded-full border border-amber-400/30 flex items-center gap-1">
+                                        <i data-lucide="flame" class="w-3 h-3 text-amber-400 fill-amber-400"></i> <span id="hero-streak">0 Day Streak</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-right">
+                            <div class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Lifetime XP</div>
+                            <div id="hero-points" class="text-2xl font-black font-heading text-neonyellow drop-shadow">0</div>
+                            <div id="hero-coins" class="text-xs text-amber-300 font-bold">0 Coins</div>
+                        </div>
+                    </div>
+
+                    <p id="reading-progress" class="mt-3 text-xs text-slate-300" aria-live="polite"></p>
+                </div>
+
+                <p class="text-xs text-slate-400">Lifetime XP is never spent or reduced. Coins buy rewards. A miss costs at most half the task's Coin award, within its nominal penalty, available balance and original day's remaining earnings. Optional expiries cost nothing. Mandatory daily misses break the feedback-only streak; there are no multipliers. Reviews count on the original day.</p>
+                <!-- Filter Tabs for Tasks -->
+                <div class="flex bg-darkcard p-1 rounded-xl text-xs font-bold border border-darkborder text-slate-400">
+                    <button onclick="setTaskTab('active')" id="tab-btn-active" class="flex-1 py-2 rounded-lg text-center transition-all bg-valored text-white font-heading tracking-wider shadow">
+                        Active (<span id="count-active">0</span>)
+                    </button>
+                    <button onclick="setTaskTab('pending')" id="tab-btn-pending" class="flex-1 py-2 rounded-lg text-center transition-all hover:text-white font-heading tracking-wider">
+                        Review (<span id="count-pending">0</span>)
+                    </button>
+                    <button onclick="setTaskTab('completed')" id="tab-btn-completed" class="flex-1 py-2 rounded-lg text-center transition-all hover:text-white font-heading tracking-wider">
+                        Done (<span id="count-completed">0</span>)
+                    </button>
+                    <button onclick="setTaskTab('missed')" id="tab-btn-missed" class="flex-1 py-2 rounded-lg text-center transition-all hover:text-white font-heading tracking-wider">
+                        Missed / expired (<span id="count-missed">0</span>)
+                    </button>
+                </div>
+
+                <!-- Chores Quest List Container -->
+                <div id="chores-list" class="space-y-3">
+                    <!-- Dynamic Chores Here -->
+                </div>
+
+            </section>
+
+            <!-- VIEW: REWARD SHOP -->
+            <section id="view-shop" class="space-y-4 hidden">
+                <div class="bg-gradient-to-r from-slate-900 via-darkcard to-slate-900 rounded-2xl p-4 border border-darkborder flex justify-between items-center shadow-md">
+                    <div>
+                        <h2 class="text-base font-bold font-heading text-white flex items-center gap-2">
+                            <i data-lucide="shopping-cart" class="w-5 h-5 text-robloxblue"></i> Gamer Loot Vault
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Spend Coins, keep your lifetime XP.</p>
+                    </div>
+                    <div class="bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-right">
+                        <span class="text-[10px] block text-slate-400 uppercase tracking-wider font-bold">Coin Vault</span>
+                        <span id="shop-balance" class="text-lg font-black font-heading text-neonyellow">0 Coins</span>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-400">Micro perks: 50–150 Coins · Mid goals: 350–750 · Major savings: 2500–5000. Requests reserve Coins until a parent fulfills or declines and refunds. No guaranteed money conversion: cash, currency cards, funded outings and gear must be added and priced by a parent first. A minor chore pass is applied by a parent deleting the agreed task, without XP.</p>
+                <div id="redemptions-list" class="space-y-2" aria-live="polite"></div>
+                <!-- Rewards Grid -->
+                <div id="rewards-list" class="grid grid-cols-1 gap-3">
+                    <!-- Dynamic Rewards Here -->
+                </div>
+            </section>
+
+            <!-- VIEW: PARENT ADMIN CONTROL (Only visible in Parent Mode) -->
+            <section id="view-parent" class="space-y-4 hidden">
+                <!-- Manage Players -->
+                <div class="bg-darkcard p-4 rounded-2xl border border-darkborder space-y-3 shadow-md">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-white font-heading text-sm flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 text-neoncyan"></i> Manage Players (SQUAD)
+                        </h3>
+                        <button onclick="openAddKidModal()" class="text-xs bg-neoncyan/10 text-neoncyan border border-neoncyan/30 font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 hover:bg-neoncyan/20 btn-bounce">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Gamer
+                        </button>
+                    </div>
+                    <div id="parent-kids-list" class="divide-y divide-slate-800">
+                        <!-- Dynamic Parent Kids List -->
+                    </div>
+                </div>
+
+                <!-- Quick Actions for Tasks & Loot -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="openAddChoreModal()" class="bg-gradient-to-br from-emerald-950 to-slate-900 border border-emerald-500/40 p-4 rounded-2xl text-left hover:border-emerald-400 transition-all btn-bounce shadow-md">
+                        <div class="w-8 h-8 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center mb-2">
+                            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                        </div>
+                        <h4 class="font-bold font-heading text-white text-sm">Create Quest</h4>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Custom task for one named player.</p>
+                    </button>
+
+                    <button onclick="openAddRewardModal()" class="bg-gradient-to-br from-purple-950 to-slate-900 border border-purple-500/40 p-4 rounded-2xl text-left hover:border-purple-400 transition-all btn-bounce shadow-md">
+                        <div class="w-8 h-8 bg-purple-500/20 text-purple-400 rounded-xl flex items-center justify-center mb-2">
+                            <i data-lucide="gift" class="w-5 h-5"></i>
+                        </div>
+                        <h4 class="font-bold font-heading text-white text-sm">Add Loot Reward</h4>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Add gaming perks, passes, or cash-ins.</p>
+                    </button>
+                </div>
+
+                <div class="bg-darkcard p-4 rounded-2xl border border-darkborder space-y-3">
+                    <h3 class="font-bold text-white font-heading text-sm">Source Catalog → Deploy Template</h3>
+                    <p class="text-xs text-slate-400">For existing families too: add only what you choose; saved catalogs and prices are never replaced. Shared chores pay ONE named player, not the whole squad. Delete an unsubmitted assignment before moving it. Weekly tasks repeat Mon–Sun; cooking is deployed per job, training per scheduled session. Deploy personal tasks separately for additional players.</p>
+                    <form onsubmit="deployTemplate(event)" class="space-y-3">
+                        <label for="template-choice" class="block text-xs">Task template</label>
+                        <select id="template-choice" onchange="renderTemplateDetails()" class="w-full bg-slate-900 rounded-xl p-2 text-sm"></select>
+                        <p id="template-details" class="text-xs text-slate-300" aria-live="polite"></p>
+                        <label for="template-player" class="block text-xs">Target player (required, including shared jobs)</label>
+                        <select id="template-player" required class="w-full bg-slate-900 rounded-xl p-2 text-sm"></select>
+                        <div id="template-date-field" class="hidden">
+                            <label for="template-date" class="block text-xs">Training session date</label>
+                            <input id="template-date" type="date" required class="w-full bg-slate-900 rounded-xl p-2 text-sm">
+                        </div>
+                        <button id="template-deploy" type="submit" class="bg-emerald-700 disabled:opacity-40 rounded-xl px-3 py-2 text-xs font-bold">Deploy selected template</button>
+                    </form>
+                    <button onclick="importDefaultRewards()" class="border border-purple-500 rounded-xl px-3 py-2 text-xs">Add missing default rewards (confirm first)</button>
+                    <p class="text-xs text-slate-400">Importing rewards is opt-in and can restore deleted defaults; it never reprices saved rewards or pending requests. Editing catalog.json does not update existing task snapshots. Weekly reading bonuses appear in Review automatically after 5 distinct approved reading days, once per player per Mon–Sun week.</p>
+                </div>
+
+                <!-- Admin Security Note -->
+                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
+                    <i data-lucide="lock" class="w-4 h-4 text-amber-400 shrink-0"></i>
+                    <span>Default Parent Passcode is <strong class="text-amber-300 font-mono">1234</strong>. Direct +/- controls change Coins only (5 at a time). Process requests in the Loot Vault. The PIN is a shared-device convenience, not real security: browser storage and code can be edited. Tap "Exit Admin" to lock.</span>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- BOTTOM NAVIGATION BAR -->
+        <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-darkcard/95 backdrop-blur-md border-t border-darkborder px-6 py-2.5 flex justify-around items-center z-20">
+            <button onclick="switchMainView('chores')" id="nav-chores" class="flex flex-col items-center text-valored font-bold transition-all btn-bounce">
+                <i data-lucide="sword" class="w-5 h-5"></i>
+                <span class="text-[10px] font-heading mt-1 tracking-wider">Quests</span>
+            </button>
+            <button onclick="switchMainView('shop')" id="nav-shop" class="flex flex-col items-center text-slate-500 font-bold hover:text-slate-300 transition-all btn-bounce">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                <span class="text-[10px] font-heading mt-1 tracking-wider">Loot Vault</span>
+            </button>
+            <button onclick="switchMainView('parent')" id="nav-parent" class="flex flex-col items-center text-slate-500 font-bold hover:text-slate-300 transition-all btn-bounce hidden">
+                <i data-lucide="sliders" class="w-5 h-5"></i>
+                <span class="text-[10px] font-heading mt-1 tracking-wider">Admin</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- MODALS -->
+
+    <!-- Modal: Add / Edit Quest -->
+    <div id="modal-chore" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden backdrop-blur-md">
+        <div class="bg-darkcard border border-darkborder rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 id="modal-chore-title" class="font-bold text-base font-heading text-white flex items-center gap-2">
+                    <i data-lucide="crosshair" class="w-5 h-5 text-valored"></i> Create New Quest
+                </h3>
+                <button onclick="closeModal('modal-chore')" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-chore" onsubmit="saveChore(event)" class="space-y-3">
+                <input type="hidden" id="chore-id">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Quest Title</label>
+                    <input type="text" id="chore-name" required placeholder="e.g. Clean Desk & Cable Org, Take Out Trash" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white outline-none focus:border-valored">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Assign To Player</label>
+                    <select id="chore-assigned" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white outline-none focus:border-valored">
+                        <!-- Dynamic options -->
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-400 mb-1">+ Victory XP</label>
+                        <input type="number" id="chore-points" min="1" max="1000" step="1" value="25" required class="w-full px-3 py-2 bg-slate-900 border border-emerald-500/40 text-emerald-400 font-extrabold rounded-xl text-sm outline-none">
+                    </div>
+                    <div>
+                        <label for="chore-penalty" class="block text-xs font-bold text-valored mb-1">Nominal penalty (0–1000)</label>
+                        <input type="number" id="chore-penalty" min="0" max="1000" step="1" value="3" required class="w-full px-3 py-2 bg-slate-900 border border-valored/40 text-valored font-extrabold rounded-xl text-sm outline-none">
+                    </div>
+                </div>
+                <div class="text-xs text-slate-300 space-y-2">
+                    <label for="chore-coins">Victory Coins (0–1000)</label>
+                    <input type="number" id="chore-coins" min="0" max="1000" step="1" value="10" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl">
+                    <p>Actual missed loss is bounded by half the award, balance and original-day remaining earnings; nominal values are not guaranteed deductions.</p>
+                    <label for="chore-cadence" class="block">Cadence</label>
+                    <select id="chore-cadence" class="w-full bg-slate-900 rounded-xl p-2"><option value="on-demand">On-demand (one job)</option><option value="daily">Daily (local midnight)</option><option value="weekly">Weekly (Mon–Sun)</option></select>
+                    <label class="block"><input type="checkbox" id="chore-mandatory"> Mandatory for daily streak</label>
+                    <label class="block"><input type="checkbox" id="chore-review"> Parent review (always for ≥75 XP or ≥75 Coins)</label>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Select Game / Icon Badge</label>
+                    <div class="flex gap-2 overflow-x-auto py-1" id="emoji-picker-chore">
+                        <!-- Emoji buttons -->
+                    </div>
+                    <input type="hidden" id="chore-emoji" value="🧹">
+                </div>
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeModal('modal-chore')" class="flex-1 py-2.5 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs uppercase">Cancel</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-valored text-white font-bold font-heading text-xs tracking-wider shadow-lg hover:bg-red-600 btn-bounce">Deploy Quest</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add Gamer Profile -->
+    <div id="modal-kid" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden backdrop-blur-md">
+        <div class="bg-darkcard border border-darkborder rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-base font-heading text-white flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-5 h-5 text-neoncyan"></i> Add Gamer Tag Profile
+                </h3>
+                <button onclick="closeModal('modal-kid')" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-kid" onsubmit="saveKid(event)" class="space-y-3">
+                <input type="hidden" id="kid-id">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Gamer Tag / Name</label>
+                    <input type="text" id="kid-name" required placeholder="e.g. Shadow_14, Alex" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white outline-none focus:border-neoncyan">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Avatar Badge</label>
+                    <div class="flex gap-2 overflow-x-auto py-1" id="emoji-picker-kid"></div>
+                    <input type="hidden" id="kid-avatar" value="🎮">
+                </div>
+                <div>
+                    <label for="kid-points" class="block text-xs font-bold text-slate-300 mb-1">Starting Coins (XP starts at zero)</label>
+                    <input type="number" id="kid-points" value="0" min="0" max="1000" step="1" required class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white outline-none">
+                </div>
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeModal('modal-kid')" class="flex-1 py-2.5 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs uppercase">Cancel</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-neoncyan text-slate-950 font-bold font-heading text-xs tracking-wider shadow-lg hover:bg-cyan-400 btn-bounce">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add Reward Item -->
+    <div id="modal-reward" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden backdrop-blur-md">
+        <div class="bg-darkcard border border-darkborder rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-base font-heading text-white flex items-center gap-2">
+                    <i data-lucide="gift" class="w-5 h-5 text-purple-400"></i> Create Loot Reward
+                </h3>
+                <button onclick="closeModal('modal-reward')" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="form-reward" onsubmit="saveReward(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Reward Title</label>
+                    <input type="text" id="reward-title" required placeholder="e.g. +1 hr Roblox/Valorant Session, 800 Robux" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white outline-none focus:border-purple-500">
+                </div>
+                <div>
+                    <label for="reward-cost" class="block text-xs font-bold text-slate-300 mb-1">Cost (Coins)</label>
+                    <input type="number" id="reward-cost" min="1" max="100000" step="1" value="100" required class="w-full px-3 py-2 bg-slate-900 border border-purple-500/40 text-neonyellow font-extrabold rounded-xl text-sm outline-none">
+                    <label for="reward-tier" class="block text-xs text-slate-300 mt-2">Reward tier</label>
+                    <select id="reward-tier" class="w-full px-3 py-2 bg-slate-900 rounded-xl text-sm text-white"><option value="1">1 · Micro (50–150 suggested)</option><option value="2">2 · Mid (350–750 suggested)</option><option value="3">3 · Major (2500–5000 suggested)</option></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Category Emoji</label>
+                    <div class="flex gap-2 overflow-x-auto py-1" id="emoji-picker-reward"></div>
+                    <input type="hidden" id="reward-emoji" value="🎮">
+                </div>
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeModal('modal-reward')" class="flex-1 py-2.5 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs uppercase">Cancel</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-purple-600 text-white font-bold font-heading text-xs tracking-wider shadow-lg hover:bg-purple-700 btn-bounce">Add To Loot Shop</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Parent Security Lock Entry -->
+    <div id="modal-pin" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 hidden backdrop-blur-md">
+        <div class="bg-darkcard border border-darkborder rounded-2xl w-full max-w-xs p-6 text-center space-y-4 shadow-2xl">
+            <div class="w-12 h-12 bg-valored/20 text-valored rounded-2xl flex items-center justify-center mx-auto border border-valored/40 glow-red">
+                <i data-lucide="shield-check" class="w-6 h-6"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-base font-heading text-white">Parent Passcode</h3>
+                <p class="text-xs text-slate-400 mt-1">Enter PIN (Default: <span class="font-mono font-bold text-neoncyan">1234</span>)</p>
+            </div>
+            <input type="password" id="pin-input" maxlength="4" placeholder="••••" class="w-full text-center text-2xl tracking-widest font-bold font-mono py-2 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none focus:border-neoncyan">
+            <div class="flex gap-2">
+                <button onclick="closeModal('modal-pin')" class="flex-1 py-2 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs uppercase">Cancel</button>
+                <button onclick="verifyPin()" class="flex-1 py-2 rounded-xl bg-valored text-white font-bold font-heading text-xs tracking-wider shadow-md hover:bg-red-600 btn-bounce">Authenticate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" role="status" class="fixed top-4 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 transition-all duration-300 -translate-y-20 opacity-0 pointer-events-none z-50 max-w-xs">
+        <i data-lucide="info" id="toast-icon" class="w-4 h-4 text-neoncyan"></i>
+        <span id="toast-msg">Quest Updated!</span>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script src="app.js"></script>
+</body>
+</html>

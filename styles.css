@@ -1,0 +1,45 @@
+        body {
+            font-family: 'Nunito', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #05070C;
+            color: #F1F5F9;
+        }
+        h1, h2, h3, .font-heading {
+            font-family: 'Chakra Petch', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF4655;
+            border-radius: 4px;
+        }
+        /* Gamer Touch Feedback */
+        .btn-bounce:active {
+            transform: scale(0.96);
+        }
+        /* Neon Glows */
+        .glow-red {
+            box-shadow: 0 0 15px rgba(255, 70, 85, 0.35);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.35);
+        }
+        .glow-green {
+            box-shadow: 0 0 15px rgba(85, 255, 85, 0.35);
+        }
+        .glow-yellow {
+            box-shadow: 0 0 15px rgba(255, 230, 0, 0.35);
+        }
+        .glass-dark {
+            background: rgba(18, 24, 38, 0.85);
+            backdrop-filter: blur(12px);
+        }

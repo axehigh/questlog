@@ -1,0 +1,34 @@
+{
+  "kids": [
+    {"id":"k1","name":"Alex","avatar":"🎮","xp":0,"coins":0,"days":{}},
+    {"id":"k2","name":"Chris","avatar":"🗡️","xp":0,"coins":0,"days":{}}
+  ],
+  "chores": [
+    {"id":"cat-care","title":"Refill Cat Food & Fresh Water","points":15,"coins":15,"penalty":20,"emoji":"🐱","cadence":"daily","ownership":"shared","defaultOwner":"k1","seed":true,"mandatory":true,"requiresReview":false},
+    {"id":"tidy-floor","title":"Tidy Floor","points":20,"coins":20,"penalty":20,"emoji":"🧹","cadence":"daily","ownership":"personal","seed":true,"mandatory":true,"requiresReview":false},
+    {"id":"tidy-desk","title":"Tidy Desk & Cable Area","points":20,"coins":20,"penalty":20,"emoji":"🖥️","cadence":"daily","ownership":"personal","seed":true,"mandatory":true,"requiresReview":false},
+    {"id":"dishwasher","title":"Empty Dishwasher","points":30,"coins":30,"penalty":30,"emoji":"🍽️","cadence":"daily","ownership":"shared","defaultOwner":"k2","seed":true,"mandatory":true,"requiresReview":false},
+    {"id":"dinner-table","title":"Set & Clear Dinner Table","points":25,"coins":25,"penalty":20,"emoji":"🍽️","cadence":"daily","ownership":"shared","defaultOwner":"k1","seed":true,"mandatory":true,"requiresReview":false},
+    {"id":"trash","title":"Take Out Trash & Recycling","points":25,"coins":25,"penalty":25,"emoji":"🗑️","cadence":"daily","ownership":"shared","defaultOwner":"k2","seed":true,"mandatory":true,"requiresReview":false},
+    {"id":"vacuum-own","title":"Vacuum Own Room","points":40,"coins":40,"penalty":30,"emoji":"🧹","cadence":"weekly","ownership":"personal","mandatory":false,"requiresReview":false},
+    {"id":"vacuum-stairs","title":"Vacuum Stairs","points":50,"coins":50,"penalty":30,"emoji":"🧹","cadence":"weekly","ownership":"shared","mandatory":false,"requiresReview":false},
+    {"id":"vacuum-gaming","title":"Vacuum Downstairs Gaming Room","points":50,"coins":50,"penalty":30,"emoji":"🧹","cadence":"weekly","ownership":"shared","mandatory":false,"requiresReview":false},
+    {"id":"vacuum-tv","title":"Vacuum Downstairs TV Room","points":50,"coins":50,"penalty":30,"emoji":"🧹","cadence":"weekly","ownership":"shared","mandatory":false,"requiresReview":false},
+    {"id":"simple-meal","title":"Prep Simple Meal / Lunch","points":40,"coins":40,"penalty":0,"emoji":"🥪","cadence":"on-demand","ownership":"personal","mandatory":false,"requiresReview":false},
+    {"id":"bread","title":"Bake Bread","points":100,"coins":100,"penalty":0,"emoji":"🍞","cadence":"on-demand","ownership":"shared","mandatory":false,"requiresReview":true},
+    {"id":"family-dinner","title":"Cook Family Dinner","points":120,"coins":120,"penalty":0,"emoji":"🍳","cadence":"on-demand","ownership":"shared","mandatory":false,"requiresReview":true},
+    {"id":"reading-15","title":"Read Book (15 mins)","points":25,"coins":25,"penalty":0,"emoji":"📚","cadence":"daily","ownership":"personal","seed":true,"mandatory":false,"requiresReview":false,"exclusiveGroup":"reading"},
+    {"id":"reading-30","title":"Read Book (30 mins)","points":65,"coins":65,"penalty":0,"emoji":"📚","cadence":"daily","ownership":"personal","seed":true,"mandatory":false,"requiresReview":false,"exclusiveGroup":"reading"},
+    {"id":"training","title":"Go to Training / Workout","points":75,"coins":75,"penalty":50,"emoji":"🏋️","cadence":"on-demand","scheduled":true,"ownership":"personal","mandatory":false,"requiresReview":true},
+    {"id":"reading-week","title":"Weekly Reading Streak (5 of 7 Days)","points":250,"coins":250,"penalty":0,"emoji":"📖","cadence":"weekly","ownership":"personal","mandatory":false,"requiresReview":true,"bonus":"reading","requiredDays":5}
+  ],
+  "rewards": [
+    {"id":"gaming-extension","title":"+30 Min Weekend Gaming Extension","cost":75,"tier":1,"emoji":"🎮"},
+    {"id":"minor-pass","title":"One-Time Minor Chore Pass (Parent Agreed)","cost":100,"tier":1,"emoji":"🎟️"},
+    {"id":"bedtime","title":"+30 Min Weekend Bedtime Buffer","cost":100,"tier":1,"emoji":"🌙"},
+    {"id":"playlist","title":"Choose the Family Car Playlist","cost":50,"tier":1,"emoji":"🎵"},
+    {"id":"dinner-choice","title":"Choose Friday Night Dinner","cost":500,"tier":2,"emoji":"🍕"},
+    {"id":"friends-session","title":"Parent-Agreed Gaming Session with Friends","cost":750,"tier":2,"emoji":"🎮"},
+    {"id":"special-day","title":"Plan a Special Family Day (Agree Scope First)","cost":3000,"tier":3,"emoji":"🌟"}
+  ]
+}
