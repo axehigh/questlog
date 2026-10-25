@@ -725,10 +725,13 @@
         // Navigation state
         function updateNavigation() {
             const parentNavBtn = document.getElementById('nav-parent');
+            const appShell = document.getElementById('app');
             if (appState.isParentMode) {
                 parentNavBtn.classList.remove('hidden');
+                if (appShell) appShell.classList.add('is-admin-mode');
             } else {
                 parentNavBtn.classList.add('hidden');
+                if (appShell) appShell.classList.remove('is-admin-mode');
                 if (appState.activeView === 'parent') appState.activeView = 'chores';
             }
 
