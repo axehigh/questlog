@@ -19,7 +19,12 @@
         let catalog;
         let requestedTemplateId = null;
         let prototypeResetInProgress = false;
-        const STORAGE_KEY = 'chore_quest_gamer_data';
+        let serverETag = null;
+        let saveQueue = Promise.resolve();
+        let pendingWrites = 0;
+        let localRevision = 0;
+        let storageFailed = false;
+        let refreshInProgress = false;
         const activeKids = () => appState.kids.filter(k => !k.archived);
         const activePlayer = id => appState.kids.find(k => k.id === id && !k.archived);
         const validAmount = n => Number.isSafeInteger(n) && n >= 0 && n <= 1000000000;
@@ -143,34 +148,36 @@
         // --- INIT & PERSISTENCE ---
         window.onload = async function() {
             try {
-                const response = await fetch('catalog.json');
+                document.getElementById('app').inert = true;
+                const response = await fetch('data/catalog.json', {cache: 'no-store'});
                 requireValue(response.ok, `Catalog HTTP ${response.status}`);
                 catalog = await response.json();
                 defaultKids = catalog.kids;
-                // Validate defaults even when this browser already has a custom catalog.
+                // Validate defaults even when the saved family has a custom catalog.
                 checkRows(catalog.chores, 'templates');
                 checkRows(defaultKids, 'starter players');
                 catalog.chores.forEach(c => requireValue(typeof c.title === 'string' && typeof c.emoji === 'string' && validAmount(c.points) && validAmount(c.coins) && validAmount(c.penalty) && ['daily','weekly','on-demand'].includes(c.cadence) && ['shared','personal'].includes(c.ownership) && typeof c.mandatory === 'boolean' && typeof c.requiresReview === 'boolean' && (!c.bonus || (c.bonus === 'reading' && Number.isInteger(c.requiredDays) && c.requiredDays >= 1 && c.requiredDays <= 7)), 'Invalid catalog template'));
                 catalog.chores.filter(c => c.seed && c.ownership === 'shared').forEach(c => requireValue(defaultKids.some(k => k.id === c.defaultOwner), 'Unknown shared seed owner'));
                 validateData({kids: defaultKids, chores: seedChores(), rewards: catalog.rewards, redemptions: [], parentPin: '1234'});
-                loadFromStorage();
+                const saved = await readServerState();
+                loadFromStorage(saved.data);
+                serverETag = saved.etag;
+                rollDailyQuests();
+                if (saved.data === null && !pendingWrites) saveToStorage();
+                await saveQueue;
+                if (storageFailed) return;
                 initEmojiPickers();
                 renderApp();
-                window.addEventListener('focus', renderApp);
+                document.getElementById('app').inert = false;
+                window.addEventListener('focus', refreshFromServer);
                 document.addEventListener('keydown', handleModalKey);
-                setInterval(renderApp, 60000);
+                setInterval(refreshFromServer, 60000);
             } catch (error) {
-                document.getElementById('app').textContent = `Unable to load Chore Quest: ${error.message}. Saved data has not been replaced. Check catalog.json and browser storage, then reload. Serve this folder over HTTP (python3 -m http.server 8000); file:// is not supported.`;
+                document.getElementById('app').inert = false;
+                document.getElementById('app').textContent = `Unable to load Chore Quest: ${error.message}. Check data/catalog.json and the PHP storage service, then reload. No browser-only fallback is used. Serve this folder with npm run dev; file:// and static hosting are not supported.`;
             }
         };
 
-        function expandChores(chores, kids = defaultKids) {
-            requireValue(Array.isArray(chores), 'Invalid catalog chores');
-            return chores.flatMap(c => (c.assignedTo === 'all' ? kids : [kids.find(k => k.id === c.assignedTo)]).map(k => {
-                requireValue(k, 'Unknown quest player');
-                return {...c, id: c.assignedTo === 'all' ? `${c.id}_${k.id}` : c.id, assignedTo: k.id, day: c.day || today()};
-            }));
-        }
         function templateQuest(template, kidId, date = today()) {
             return {...template, id: `c_${newId()}`, templateId: template.id, assignedTo: kidId,
                 day: date, period: template.cadence === 'weekly' ? weekStart(date) : date,
@@ -181,35 +188,48 @@
                 (c.ownership === 'personal' ? defaultKids : defaultKids.filter(k => k.id === c.defaultOwner))
                     .map(k => templateQuest(c, k.id)));
         }
-        function loadFromStorage() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            const parsed = saved ? JSON.parse(saved) : {schemaVersion: 2, kids: defaultKids, chores: seedChores(), rewards: catalog.rewards, redemptions: [], parentPin: '1234'};
-            requireValue(!parsed.schemaVersion || parsed.schemaVersion === 2, 'Unsupported saved data version');
-            if (!parsed.schemaVersion) {
-                // History cannot be reconstructed: retain every legacy point in BOTH ledgers.
-                parsed.kids = (parsed.kids === undefined ? defaultKids : parsed.kids).map(k => ({...k, xp: k.xp ?? k.points ?? 0, coins: k.coins ?? k.points ?? 0, days: k.days ?? {}, streak: k.days ? k.streak ?? 0 : 0}));
-                parsed.chores = expandChores((parsed.chores === undefined ? [] : parsed.chores).map(c => ({...c, coins: c.coins ?? Math.max(1, Math.ceil(c.points / 5)), penalty: c.penalty ?? 0, daily: c.daily ?? false, mandatory: c.mandatory ?? false, requiresReview: c.requiresReview ?? true})), parsed.kids);
-                parsed.rewards = (parsed.rewards === undefined ? catalog.rewards : parsed.rewards).map(r => ({...r, tier: r.tier ?? 1}));
-                if (parsed.redemptions === undefined) parsed.redemptions = [];
-                if (parsed.parentPin === undefined) parsed.parentPin = '1234';
-            }
+        function loadFromStorage(saved) {
+            const parsed = saved === null ? JSON.parse(JSON.stringify({schemaVersion: 2, kids: defaultKids, chores: seedChores(), rewards: catalog.rewards, redemptions: [], parentPin: '1234'})) : saved;
+            requireValue(parsed && parsed.schemaVersion === 2, 'Unsupported saved data version');
             validateData(parsed);
             parsed.kids.forEach(k => {
                 k.readingDays ??= [];
                 k.readingBonuses ??= {};
             });
-            if (saved && !parsed.schemaVersion && !localStorage.getItem(`${STORAGE_KEY}_legacy_backup`)) localStorage.setItem(`${STORAGE_KEY}_legacy_backup`, saved);
             Object.assign(appState, {kids: parsed.kids, chores: parsed.chores, rewards: parsed.rewards, redemptions: parsed.redemptions, parentPin: parsed.parentPin});
             savedData = parsed;
-            // Profile choice is deliberately session-only, including on a shared device.
-            appState.activeKidId = null;
+        }
+
+        function responseETag(response) {
+            const etag = response.headers.get('ETag');
+            requireValue(etag && /^"(?:none|[a-f0-9]{64})"$/.test(etag), 'Missing or invalid storage ETag');
+            return etag;
+        }
+
+        async function readServerState() {
+            const response = await fetch('api.php', {cache: 'no-store'});
+            requireValue(response.ok, `Storage read HTTP ${response.status}`);
+            const data = await response.json().catch(() => { throw new Error('Storage returned invalid JSON.'); });
+            return {data, etag: responseETag(response)};
+        }
+
+        function storageFailure(message) {
+            if (storageFailed) return;
+            storageFailed = true;
+            appState.isParentMode = false;
+            document.querySelectorAll('[id^="modal-"]').forEach(modal => modal.classList.add('hidden'));
+            document.getElementById('toast').classList.add('hidden');
+            const app = document.getElementById('app');
+            app.inert = false;
+            app.textContent = `${message} This page is blocked. Recent changes may not have been saved; the server may have received a request even if its reply failed. Check the PHP service and reload to read server state. No browser-only fallback or automatic overwrite is used.`;
+            window.alert(app.textContent);
         }
 
         function saveToStorage() {
-            if (prototypeResetInProgress) return;
-            validateData(appState);
+            if (prototypeResetInProgress || storageFailed) return saveQueue;
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                validateData(appState);
+                const snapshot = JSON.stringify({
                 ...savedData,
                 schemaVersion: 2,
                 kids: appState.kids,
@@ -217,17 +237,63 @@
                 rewards: appState.rewards,
                 parentPin: appState.parentPin,
                 redemptions: appState.redemptions
-                }));
+                });
+                pendingWrites++;
+                localRevision++;
+                saveQueue = saveQueue.then(async () => {
+                    if (storageFailed) return;
+                    const response = await fetch('api.php', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json', 'If-Match': serverETag},
+                        body: snapshot
+                    });
+                    requireValue(response.status !== 409, 'Another page or device changed the saved family.');
+                    requireValue(response.ok, `Storage write HTTP ${response.status}.`);
+                    requireValue((await response.json()).success === true, 'Storage did not confirm the save.');
+                    serverETag = responseETag(response);
+                }).catch(error => storageFailure(`Unable to save changes: ${error.message}`))
+                    .finally(() => { pendingWrites--; });
             } catch (error) {
-                window.alert('Unable to save changes in browser storage. Stop using this page and reload after fixing storage access/space. Your previous saved data has not been replaced.');
-                throw error;
+                storageFailure(`Unable to prepare changes for saving: ${error.message}`);
+            }
+            return saveQueue;
+        }
+
+        async function refreshFromServer() {
+            if (prototypeResetInProgress || storageFailed || refreshInProgress) return;
+            if (pendingWrites) { renderApp(); return; }
+            refreshInProgress = true;
+            const revision = localRevision;
+            try {
+                const saved = await readServerState();
+                // A local action during GET owns this page until its queued writes settle.
+                if (prototypeResetInProgress || storageFailed || pendingWrites || revision !== localRevision) return;
+                if (saved.etag !== serverETag) {
+                    loadFromStorage(saved.data);
+                    serverETag = saved.etag;
+                    ['modal-chore','modal-kid','modal-reward','modal-pin'].forEach(closeModal);
+                    requestedTemplateId = null;
+                    if (appState.activeKidId && !activePlayer(appState.activeKidId)) {
+                        appState.activeKidId = null;
+                        appState.isParentMode = false;
+                        appState.activeView = 'chores';
+                        appState.activeTab = 'active';
+                    }
+                    if (saved.data === null) await saveToStorage();
+                }
+                renderApp();
+            } catch (error) {
+                storageFailure(`Unable to refresh saved data: ${error.message}`);
+            } finally {
+                refreshInProgress = false;
             }
         }
 
         // --- RENDER FUNCTIONS ---
         function renderApp() {
-            if (prototypeResetInProgress) return;
+            if (prototypeResetInProgress || storageFailed) return;
             rollDailyQuests();
+            if (storageFailed) return;
             renderKidSelector();
             renderEntry();
             renderKidHero();
@@ -1163,20 +1229,21 @@
             renderApp();
         }
 
-        function resetPrototypeData() {
-            if (!appState.isParentMode || prototypeResetInProgress) return;
-            const answer = window.prompt('IRREVERSIBLE: reset ALL Chore Quest data in this browser? This removes every active/archived profile, XP, Coins, chores, rewards/custom catalog copies, history, requests, saved PIN and legacy backup. Reload starts from catalog.json (Alex/Chris and current defaults, PIN 1234). Other sites/apps and unrelated storage keys are untouched. Back up first. Type RESET to continue.');
+        async function resetPrototypeData() {
+            if (!appState.isParentMode || prototypeResetInProgress || storageFailed) return;
+            const answer = window.prompt('IRREVERSIBLE: reset the server family for ALL devices using this PHP service? This removes every active/archived profile, XP, Coins, chores, rewards/custom catalog copies, history, requests and saved PIN. Reload starts from data/catalog.json (Alex/Chris and current defaults, PIN 1234). Old browser data is ignored and left untouched. Type RESET to continue.');
             if (answer !== 'RESET') return;
             prototypeResetInProgress = true;
+            document.getElementById('app').inert = true;
             try {
-                // Remove the backup first: if that fails, the main saved family stays intact.
-                for (const key of [`${STORAGE_KEY}_legacy_backup`, STORAGE_KEY]) {
-                    localStorage.removeItem(key);
-                    requireValue(localStorage.getItem(key) === null, 'Browser storage did not remove app data');
-                }
+                await saveQueue;
+                if (storageFailed) return;
+                const response = await fetch('api.php', {method: 'DELETE', headers: {'If-Match': serverETag}});
+                requireValue(response.status !== 409, 'Another page or device changed the saved family; reset was not accepted.');
+                requireValue(response.ok, `Storage reset HTTP ${response.status}.`);
+                requireValue((await response.json()).success === true && responseETag(response) === '"none"', 'Storage did not confirm the reset.');
             } catch (error) {
-                prototypeResetInProgress = false;
-                window.alert('Reset could not finish because browser storage failed. Some app keys may already have been removed; no successful reset is claimed. Stop using this page, check storage access and back up any remaining data before reloading or trying again.');
+                storageFailure(`Reset could not be confirmed: ${error.message} The server family may already have been removed; no successful reset is claimed.`);
                 return;
             }
             window.location.reload();
@@ -1259,11 +1326,12 @@
         }
 
         function showToast(message, iconName = 'info') {
+            if (storageFailed) return;
             const toast = document.getElementById('toast');
             const msgEl = document.getElementById('toast-msg');
             const iconEl = document.getElementById('toast-icon');
 
-            msgEl.textContent = message;
+            msgEl.textContent = pendingWrites ? `${message} · Saving to server…` : message;
             if (iconEl) iconEl.setAttribute('data-lucide', iconName);
             lucide.createIcons();
 

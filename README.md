@@ -1,23 +1,36 @@
 # Chore Quest
 
-A static browser app. No installation or build step is required.
+A single-page browser app with local PHP storage. No dependency installation or
+build step is required. PHP is required to run it.
 
-## GitHub Pages
+## Hosting and storage
 
-The site is ready for project Pages: `index.html` is at the repository root,
-and local scripts and styles use relative paths, so they work under `/questlog/`.
+Run `npm run dev` and open <http://127.0.0.1:8000/>. GitHub Pages and other
+static-only servers cannot run the app's PHP API. CDN scripts and Google Fonts
+require internet access.
 
-1. Commit the site files and publish them to the branch you want to deploy
-   (currently `master`).
-2. In the GitHub repository, open **Settings → Pages**.
-3. Under **Build and deployment**, set **Source** to **Deploy from a branch**.
-4. Select that branch and **/ (root)**, then **Save**.
-5. After deployment completes, open <https://axehigh.github.io/questlog/>.
+- `index.html`, `app.js`, `styles.css` and `tailwind.config.js` are the frontend.
+- `data/catalog.json` supplies starter profiles, task templates and reward prices.
+- Virtual `/api.php` is handled by `server/api.php`; `state/state.json` stores the
+  full schema-2 family snapshot. The frontend never writes the source catalog.
+- `server/router.php` allows only the frontend assets, catalog and API routes;
+  server code and saved state are not served as static files. Use this router,
+  not an unrestricted document-root server.
 
-No custom GitHub Actions workflow or build command is needed. Later commits to
-the selected branch automatically update the site. CDN scripts and Google Fonts
-require internet access. Game data stays in that browser's localStorage; it is
-not synced between devices or copied from localhost to the published site.
+All devices using the same PHP service share one family. Startup reads the server;
+an empty server is seeded from the catalog and saved before the app becomes ready.
+Actions queue full snapshots in order, using the previous server ETag as `If-Match`.
+Focus/minute refresh reads server changes only when no local writes are pending,
+without changing a still-active selected player. Daily/weekly rollover still runs.
+Concurrent edits may be rejected rather than merged: a stale write (409), failed
+request or invalid saved data blocks use and asks for a reload. A failed response
+does not prove a write failed on the server. There is no browser-only fallback,
+automatic conflict recovery or offline saving. Old localStorage data is ignored,
+not migrated or backed up by the client.
+
+**Prototype mode:** current data is disposable. Preservation, migration and recovery
+are not requirements at this stage; reset/reseed deliberately when needed. Existing
+backend reset backups are implementation safeguards, not a client recovery workflow.
 
 ## Prototype catalog and economy
 
@@ -75,12 +88,12 @@ Choosing is explicit: saved deletions and empty collections are not automaticall
 restored. Choosing a catalog task adds only that task and never reprices an
 existing assignment. Use **Rewards** to request a reward with available Coins.
 
-`catalog.json` contains the exact 19 source task names/face values, starter
+`data/catalog.json` contains the exact 19 source task names/face values, starter
 profiles **Alex and Chris**, and configurable reward prices. Existing families
 keep their players, balances, customized collections (even empty lists), history
 and pending reward price snapshots. Editing this file never replaces saved data.
-There is **no backend**: this JSON file is static defaults, not a writable server
-database. The app saves browser-local copies and does not edit catalog.json.
+This JSON file is static defaults, not the writable family snapshot. Saved
+collections (including empty lists and deletions) win over these defaults.
 
 - **Lifetime XP** is nonspendable and never reduced. **Coins** buy rewards. No
   ranks, rank bars/badges, rank bonuses or compounding multipliers remain.
@@ -135,30 +148,27 @@ database. The app saves browser-local copies and does not edit catalog.json.
   reward is removed. A minor chore pass is manually applied by deleting the
   agreed minor task, without XP.
 
-Storage stays at `chore_quest_gamer_data` (schema 2 with additive metadata).
-Legacy points copy equally into XP and Coins to avoid losing either balance;
-the exact original is retained once in
-`chore_quest_gamer_data_legacy_backup`. No silent reset or automatic catalog
-re-addition occurs. Invalid source/saved data blocks startup: back up/export
-storage before repairing, never clear it as error recovery. This is a local
-shared-device prototype, not secure authentication: PIN, dates and storage can
-be manipulated. There is no sync or server-side verification.
+Invalid source/saved data blocks startup instead of silently replacing it. The
+client validates chore-domain data; the server validates the snapshot envelope,
+not whether a child really completed a chore. This is a local shared-device
+prototype, not secure authentication: the PIN, dates, code and saved state can be
+manipulated. The API does not authenticate callers or enforce the Parent PIN.
 
 ### Deliberately restart the prototype
 
 Choose **Parent**, enter the saved PIN, then in Admin use **Reset prototype data**.
 Read the irreversible-loss warning and type exactly **RESET**; Cancel or anything
-else changes nothing. This removes **all** Chore Quest browser-saved profiles
+else changes nothing. This resets **all** Chore Quest server-saved profiles
 (active and archived), XP/Coins, chores, custom catalog/reward copies, history,
-requests, saved PIN and the legacy backup. Back up/export anything wanted first.
-Only `chore_quest_gamer_data` and `chore_quest_gamer_data_legacy_backup` are
-removed—unrelated localStorage keys are untouched. The page reloads and starts
-from the current catalog.json: **Alex/Chris**, current tasks/reward defaults and
-PIN **1234**. Use this only for an intentional fresh prototype, not error recovery.
-If storage removal fails, the app reports failure (some keys may already have
-been removed) rather than claiming success; stop and check/back up remaining
-storage before continuing. Reset applies only to this browser/site, not other
-devices, and cannot change the source JSON.
+requests and saved PIN for **all devices using this PHP service**, not just this
+browser. The client waits for queued writes, then sends `DELETE /api.php` with
+the latest `If-Match`. On confirmation the page reloads and seeds the current
+`data/catalog.json`: **Alex/Chris**, current tasks/reward defaults and PIN **1234**.
+It does not change source JSON or remove old browser storage. Reset is deliberately
+irreversible in the UI; no backup/export step is required for disposable data.
+The backend currently keeps a private pre-reset copy under `state/backups/`.
+On failure or an uncertain response, the app blocks and reports that reset was
+not confirmed (server data may already have been removed); it never claims success.
 
 ## Local prototype use
 
@@ -167,10 +177,27 @@ From the repository root:
 ```sh
 node --check app.js
 node --check tailwind.config.js
-python3 -m http.server 8000
+npm run dev
 ```
 
-Open <http://localhost:8000/>. Syntax checks are not browser testing. Tests and
+Open <http://127.0.0.1:8000/>. The dev script uses PHP's built-in server and
+requires `php` on PATH (the installed user-local PHP works); no `npm install`
+or build is needed. Stop it with Ctrl+C. Use this instead of Python's static
+server, which does not execute PHP and can expose PHP source.
+
+If port 8000 is already in use, run `PORT=8001 npm run dev` and open
+<http://127.0.0.1:8001/> instead.
+
+The PHP router serves the frontend and its API together. PHP needs write access
+to `state/`; snapshots are limited to 2 MiB and oversize saves are rejected, not
+truncated. Runtime state and backups are private local files, not source defaults.
+Keep this loopback-only server for local development; do not expose it publicly.
+File routing and ETag checks prevent accidental exposure/overwrites, not unauthorized
+API use. Never put credentials in frontend files, the catalog, requests or commits.
+There is no notification integration: no WhatsApp/email/push is sent for chore or
+reward requests, and no notification credentials/configuration are needed.
+
+Syntax checks are not browser testing. Tests and
 reviews are intentionally not run/added during this prototype iteration;
 existing logic scripts target older rules and need updating before later use.
 `npm test` is only a failing placeholder. When manual smoke is requested, check

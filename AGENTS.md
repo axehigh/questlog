@@ -1,14 +1,24 @@
 # Chore Quest
 
-- Static single-page app: `index.html` markup, `styles.css` custom styles,
+- Single-page app with local PHP storage: `index.html` markup, `styles.css` custom styles,
   `tailwind.config.js` browser Tailwind theme, `app.js` classic-script state,
   rendering and handlers. No framework, installed dependencies or build step.
 - Preserve CDN order: Tailwind, Lucide, canvas-confetti, Tailwind config; custom
   CSS follows. Keep `app.js` at the end of the body and initialization in
   `window.onload`; inline handlers require globally accessible functions.
 - `index.js` is an unrelated package placeholder. Do not add a build pipeline.
-- Run with `python3 -m http.server 8000`, open `http://localhost:8000`.
-  Fetching the JSON requires HTTP; CDNs/Google Fonts need internet access.
+- Run with `npm run dev`, open `http://127.0.0.1:8000` (override with `PORT`).
+  `server/router.php` serves allowed assets and routes virtual `/api.php` to
+  `server/api.php`; `data/catalog.json` holds defaults and `state/state.json`
+  holds saved state. Do not use a Python static server: it cannot run PHP.
+  CDNs/Google Fonts need internet access.
+- **Prototype mode: all current data is disposable.** Data preservation, backups,
+  backward-compatible migrations and conflict/migration recovery protections are
+  not required now; development may reset/reseed or replace prototype data.
+  These become requirements only when deployed with active users. This policy
+  overrides preservation/compatibility wording below for development changes,
+  not the chore-domain rules for normal app use. Do not remove existing backend
+  protections just to satisfy this policy. Never expose or commit credentials.
 - Prototype instructions: do not run/add tests, generate reviews, stage, commit
   or push unless the user explicitly requests that work. Syntax-only commands
   are `node --check app.js` and `node --check tailwind.config.js`. The existing
@@ -20,10 +30,10 @@
 
 ## Catalog and runtime rules
 
-- `catalog.json` owns source profiles, all 19 task templates and reward prices.
+- `data/catalog.json` owns source profiles, all 19 task templates and reward prices.
   Use unique alphanumeric/hyphen/underscore IDs and whole nonnegative amounts;
   reward cost is positive and tier is 1/2/3 (Micro/Mid/Major). Invalid source or
-  saved data blocks startup without clearing/replacing storage.
+  saved data blocks startup; prototype data may be reset/reseeded for recovery.
 - Alex/Chris are first-run players only. More players can be added with zero XP;
   no default tasks are automatically added to an existing or new extra profile.
 - Every fresh load starts at explicit profile choice (no saved/default selection).
@@ -112,27 +122,19 @@
   declines/refunds, once. Requests retain price/title after reward deletion or
   import. A minor chore pass is fulfilled manually by deleting the agreed task,
   granting no XP. PIN 1234 is shared-device convenience, not authentication;
-  dates, source and browser storage can be manipulated.
+  dates, source and stored state can be manipulated; local PHP storage is not
+  authentication either.
 
-## Saved-data compatibility
+## Prototype storage and reset
 
-- Preserve `chore_quest_gamer_data`. Schema 2 retains XP, Coins, dated day
-  ledgers, chores/rewards, PIN and redemption history with additive template,
-  cadence and reading fields. Preserve unknown top-level saved fields too.
-- Legacy `points` copies equally into XP and Coins; spending history cannot be
-  reconstructed. Preserve original fields/profiles/catalogs; legacy chores are
-  one-time reviewed unless existing flags say otherwise, Coin award is
-  `ceil(points / 5)` (minimum 1), and existing nominal penalty is retained.
-  Saved reward prices stay unchanged; absent tiers become 1. Undated legacy
-  streaks reset because their dates cannot be verified.
-- Before first legacy rewrite, retain the exact old JSON once at
-  `chore_quest_gamer_data_legacy_backup`. Never clear storage to recover from an
-  error. Export/back up before repairing data or deliberately reseeding.
-- There is no backend: `catalog.json` is static source/default data and cannot
-  be written by the app. Saved browser snapshots always take precedence.
-  Prototype-only exception to retaining storage: unlocked Parent Admin may
-  deliberately use **Reset prototype data**, after an irreversible all-data
-  warning and typing `RESET`. Remove ONLY `chore_quest_gamer_data` and
-  `chore_quest_gamer_data_legacy_backup`, then reload from current catalog defaults
-  (Alex/Chris, PIN 1234). Never use localStorage.clear(). Report storage failures
-  honestly, including possible partial removal; never claim reset succeeded then.
+- `data/catalog.json` is source/default data; saved snapshots live in
+  `state/state.json` through virtual `/api.php`, not in a browser-only store.
+  No legacy browser-data import, backup or migration is required in prototype
+  mode. Existing safeguards may remain; they are not acceptance requirements.
+- Unlocked Parent Admin's **Reset prototype data** requires an irreversible
+  all-data warning and typing `RESET`, then resets app state through the PHP API
+  and reloads current catalog defaults (Alex/Chris, PIN 1234). A backup is not
+  required. If removing legacy browser data, limit removal to
+  `chore_quest_gamer_data` and `chore_quest_gamer_data_legacy_backup`; never use
+  `localStorage.clear()` or delete unrelated data. Report storage/reset failures
+  honestly, including partial removal; never claim success after a failure.

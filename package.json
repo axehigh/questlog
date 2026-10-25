@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "php -S 127.0.0.1:${PORT:-8000} server/router.php",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "private": true

@@ -207,7 +207,7 @@
 
                 <section class="bg-darkcard p-4 rounded-2xl border border-red-800 space-y-3" aria-labelledby="reset-heading">
                     <h3 id="reset-heading" class="font-bold text-sm">Prototype data</h3>
-                    <p class="text-xs text-slate-300">No backend exists: catalog.json supplies first-run defaults; saved browser data wins until you deliberately reset it. Reset permanently removes ALL Chore Quest profiles (including archived), balances, custom tasks/rewards, history, requests, saved PIN and legacy backup in this browser. Back up first. Reload then starts with Alex/Chris and current catalog defaults, PIN 1234. Unrelated browser storage is not touched.</p>
+                    <p class="text-xs text-slate-300">data/catalog.json supplies first-run defaults; the PHP service saves one shared family for all devices using this server. Reset irreversibly removes ALL profiles (including archived), balances, custom tasks/rewards, history, requests and saved PIN for ALL those devices. Type RESET to confirm. Reload starts with Alex/Chris and current catalog defaults, PIN 1234. Old browser data is ignored and left untouched.</p>
                     <button onclick="resetPrototypeData()" class="border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm font-bold">Reset prototype data</button>
                     <p class="text-xs text-slate-400">Irreversible. You must type RESET in the confirmation to proceed.</p>
                 </section>
@@ -215,7 +215,7 @@
                 <!-- Admin Security Note -->
                 <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
                     <i data-lucide="lock" class="w-4 h-4 text-amber-400 shrink-0"></i>
-                    <span>Default Parent Passcode is <strong class="text-amber-300 font-mono">1234</strong>. Direct +/- controls change Coins only (5 at a time). Process requests in the Loot Vault. The PIN is a shared-device convenience, not real security: browser storage and code can be edited. Tap "Exit Admin" to lock.</span>
+                    <span>Default Parent Passcode is <strong class="text-amber-300 font-mono">1234</strong>. Direct +/- controls change Coins only (5 at a time). Process requests in the Loot Vault. The PIN is a shared-device convenience, not authentication: code, dates and server data can be manipulated; the API is not protected by this PIN. Tap "Exit Admin" to lock.</span>
                 </div>
             </section>
 
