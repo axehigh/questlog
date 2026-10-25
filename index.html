@@ -148,9 +148,24 @@
 
             <!-- VIEW: PARENT ADMIN CONTROL (Only visible in Parent Mode) -->
             <section id="view-parent" class="space-y-4 hidden">
-                <h2 class="font-bold text-lg">Parent controls</h2>
+                <div class="flex justify-between items-center">
+                    <h2 class="font-bold text-lg">🛡️ Parent Admin Dashboard</h2>
+                    <span class="text-[10px] bg-neoncyan/20 text-neoncyan font-bold px-2 py-1 rounded-full border border-neoncyan/40">Admin Unlocked</span>
+                </div>
                 <p id="parent-scope" class="text-sm text-slate-300"></p>
                 <div id="parent-review-links" class="flex flex-wrap gap-2"></div>
+
+                <!-- Master Overview Tabs / Sections -->
+                <div class="bg-darkcard p-4 rounded-2xl border border-darkborder space-y-3 shadow-md">
+                    <h3 class="font-bold text-white font-heading text-sm flex items-center gap-2">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4 text-neoncyan"></i> Squad Chore &amp; Completion Overview
+                    </h3>
+                    <p class="text-xs text-slate-300">Overview of all active chores, pending review, completions, and misses for each player.</p>
+                    <div id="parent-squad-overview" class="space-y-3">
+                        <!-- Dynamic squad overview rendered here -->
+                    </div>
+                </div>
+
                 <!-- Manage Players -->
                 <div class="bg-darkcard p-4 rounded-2xl border border-darkborder space-y-3 shadow-md">
                     <div class="flex justify-between items-center">
@@ -161,9 +176,27 @@
                             <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add player
                         </button>
                     </div>
-                    <p class="text-xs text-slate-300">Archive, don’t delete: keeps balances, chores and history while pausing the player. Archived players can be restored here; no catch-up penalties. Pending reward requests can still be fulfilled or refunded by Parent in Rewards.</p>
+                    <p class="text-xs text-slate-300">Archive, don’t delete: keeps balances, chores and history while pausing the player. Archived players can be restored here; no catch-up penalties.</p>
                     <div id="parent-kids-list" class="divide-y divide-slate-800">
                         <!-- Dynamic Parent Kids List -->
+                    </div>
+                </div>
+
+                <!-- Master Catalog & Rewards Listing -->
+                <div class="bg-darkcard p-4 rounded-2xl border border-darkborder space-y-3 shadow-md">
+                    <h3 class="font-bold text-white font-heading text-sm flex items-center gap-2">
+                        <i data-lucide="book-open" class="w-4 h-4 text-purple-400"></i> Master Chore Templates &amp; Rewards Catalog
+                    </h3>
+                    <p class="text-xs text-slate-300">Review all available catalog templates and active rewards in the vault.</p>
+                    <div class="grid grid-cols-1 gap-3">
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Source Chore Templates</h4>
+                            <div id="parent-catalog-chores" class="max-h-48 overflow-y-auto space-y-1.5 pr-1"></div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-800">
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Vault Rewards</h4>
+                            <div id="parent-catalog-rewards" class="max-h-48 overflow-y-auto space-y-1.5 pr-1"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -188,7 +221,7 @@
 
                 <div class="bg-darkcard p-4 rounded-2xl border border-darkborder space-y-3">
                     <h3 class="font-bold text-white font-heading text-sm">Source Catalog → Deploy Template</h3>
-                    <p class="text-xs text-slate-400">For existing families too: add only what you choose; saved catalogs and prices are never replaced. Shared chores pay ONE named player, not the whole squad. Delete an unsubmitted assignment before moving it. Weekly tasks repeat Mon–Sun; cooking is deployed per job, training per scheduled session. Deploy personal tasks separately for additional players.</p>
+                    <p class="text-xs text-slate-400">Deploy templates to players. Shared chores pay ONE named player. Weekly tasks repeat Mon–Sun.</p>
                     <form onsubmit="deployTemplate(event)" class="space-y-3">
                         <label for="template-choice" class="block text-xs">Task template</label>
                         <select id="template-choice" onchange="renderTemplateDetails()" class="w-full bg-slate-900 rounded-xl p-2 text-sm"></select>
@@ -202,7 +235,6 @@
                         <button id="template-deploy" type="submit" class="bg-emerald-700 disabled:opacity-40 rounded-xl px-3 py-2 text-xs font-bold">Deploy selected template</button>
                     </form>
                     <button onclick="importDefaultRewards()" class="border border-purple-500 rounded-xl px-3 py-2 text-xs">Add missing default rewards (confirm first)</button>
-                    <p class="text-xs text-slate-400">Importing rewards is opt-in and can restore deleted defaults; it never reprices saved rewards or pending requests. Editing catalog.json does not update existing task snapshots. Weekly reading bonuses appear in Review automatically after 5 distinct approved reading days, once per player per Mon–Sun week.</p>
                 </div>
 
                 <section class="bg-darkcard p-4 rounded-2xl border border-red-800 space-y-3" aria-labelledby="reset-heading">
@@ -212,10 +244,9 @@
                     <p class="text-xs text-slate-400">Irreversible. You must type RESET in the confirmation to proceed.</p>
                 </section>
 
-                <!-- Admin Security Note -->
                 <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
                     <i data-lucide="lock" class="w-4 h-4 text-amber-400 shrink-0"></i>
-                    <span>Default Parent Passcode is <strong class="text-amber-300 font-mono">1234</strong>. Direct +/- controls change Coins only (5 at a time). Process requests in the Loot Vault. The PIN is a shared-device convenience, not authentication: code, dates and server data can be manipulated; the API is not protected by this PIN. Tap "Exit Admin" to lock.</span>
+                    <span>Default Parent Passcode is <strong class="text-amber-300 font-mono">1234</strong>. Tap "Exit Admin" to lock.</span>
                 </div>
             </section>
 
