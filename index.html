@@ -91,33 +91,36 @@
                     <p id="reading-progress" class="reading-progress" aria-live="polite"></p>
                 </div>
 
-                <p class="help-text">Coins buy rewards. Lifetime XP records everything you have earned and is never spent. Finish a chore first, then tap “I did it”. Some chores need a parent to check them before you earn anything.</p>
-                <!-- Filter Tabs for Tasks -->
-                <details>
-                <summary class="history-summary">Today, parent review &amp; past chores</summary>
-                <div class="task-tabs">
-                    <button onclick="setTaskTab('active')" id="tab-btn-active" class="task-tab is-active">
-                        Today (<span id="count-active">0</span>)
-                    </button>
-                    <button onclick="setTaskTab('pending')" id="tab-btn-pending" class="task-tab">
-                        Review (<span id="count-pending">0</span>)
-                    </button>
-                    <button onclick="setTaskTab('completed')" id="tab-btn-completed" class="task-tab">
-                        Done (<span id="count-completed">0</span>)
-                    </button>
-                    <button onclick="setTaskTab('missed')" id="tab-btn-missed" class="task-tab">
-                        Missed / expired (<span id="count-missed">0</span>)
-                    </button>
+                <div class="flex justify-between items-center">
+                    <details class="flex-1">
+                        <summary class="history-summary">History &amp; review</summary>
+                        <div class="task-tabs mt-2">
+                            <button onclick="setTaskTab('active')" id="tab-btn-active" class="task-tab is-active">
+                                Today (<span id="count-active">0</span>)
+                            </button>
+                            <button onclick="setTaskTab('pending')" id="tab-btn-pending" class="task-tab">
+                                Review (<span id="count-pending">0</span>)
+                            </button>
+                            <button onclick="setTaskTab('completed')" id="tab-btn-completed" class="task-tab">
+                                Done (<span id="count-completed">0</span>)
+                            </button>
+                            <button onclick="setTaskTab('missed')" id="tab-btn-missed" class="task-tab">
+                                Missed (<span id="count-missed">0</span>)
+                            </button>
+                        </div>
+                    </details>
+                    <button onclick="alert('How to play:\n• Complete your assigned chores today.\n• Tap “I did it” when finished.\n• Use Coins in the Rewards shop to redeem loot!')" class="ml-2 w-7 h-7 bg-slate-800 text-slate-300 rounded-full border border-slate-700 flex items-center justify-center font-bold text-xs shrink-0 hover:bg-slate-700 hover:text-white" title="Help">?</button>
                 </div>
-                </details>
 
                 <!-- Chores Quest List Container -->
                 <div id="chores-list" class="chore-list">
                     <!-- Dynamic Chores Here -->
                 </div>
                 <section id="chore-choices" class="chore-choices" aria-labelledby="choices-heading">
-                    <h3 id="choices-heading" class="section-title">Choose an extra chore</h3>
-                    <p class="help-text">Choose a personal chore below, then do it. Household jobs belong to one child: ask a parent to assign them first. Never take someone else’s job.</p>
+                    <div class="flex justify-between items-center">
+                        <h3 id="choices-heading" class="section-title">Extra Chores</h3>
+                        <button onclick="alert('Choose a personal chore to complete for extra XP and Coins. Household chores are assigned by parents.')" class="w-6 h-6 bg-slate-800 text-slate-300 rounded-full border border-slate-700 flex items-center justify-center font-bold text-xs shrink-0 hover:bg-slate-700 hover:text-white" title="Help">?</button>
+                    </div>
                     <div id="catalog-choices" class="catalog-choices"></div>
                 </section>
 
@@ -127,8 +130,9 @@
             <section id="view-shop" class="app-view hidden">
                 <div class="shop-banner">
                     <div>
-                        <h2 class="shop-title">
+                        <h2 class="shop-title flex items-center gap-2">
                             <i data-lucide="shopping-cart" class="shop-icon"></i> Gamer Loot Vault
+                            <button onclick="alert('Spend your earned Coins on rewards and perks. Requests reserve your Coins until a parent fulfills or refunds them.')" class="w-5 h-5 bg-slate-800 text-slate-300 rounded-full border border-slate-700 inline-flex items-center justify-center font-bold text-[10px] hover:bg-slate-700 hover:text-white" title="Help">?</button>
                         </h2>
                         <p class="shop-subtitle">Spend Coins, keep your lifetime XP.</p>
                     </div>
@@ -138,7 +142,6 @@
                     </div>
                 </div>
 
-                <p class="muted-text">Micro perks: 50–150 Coins · Mid goals: 350–750 · Major savings: 2500–5000. Requests reserve Coins until a parent fulfills or declines and refunds. No guaranteed money conversion: cash, currency cards, funded outings and gear must be added and priced by a parent first. A minor chore pass is applied by a parent deleting the agreed task, without XP.</p>
                 <div id="redemptions-list" class="redemptions-list" aria-live="polite"></div>
                 <!-- Rewards Grid -->
                 <div id="rewards-list" class="rewards-list">
