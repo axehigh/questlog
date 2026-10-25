@@ -1,8 +1,19 @@
 # Chore Quest
 
-- Single-page app with local PHP storage: `index.html` markup, `styles.css` custom styles,
+- Single-page app with local PHP storage: `index.html` markup, `styles.css` app styles,
   `tailwind.config.js` browser Tailwind theme, `app.js` classic-script state,
   rendering and handlers. No framework, installed dependencies or build step.
+- Keep all utility/presentational styling in `styles.css` as plain CSS grouped by
+  semantic components. Both static `index.html` and markup built in `app.js` use
+  semantic component classes, not Tailwind utility tokens or inline styles.
+  JavaScript may toggle short semantic states (`hidden`, `is-active`,
+  `is-selected`, `is-visible`); define their appearance in CSS, including hover,
+  focus, disabled and responsive rules. Keep `hidden` stronger than component
+  display rules. Trace `className`/`classList` and generated markup together when
+  changing styles (navigation, tabs, profiles, emoji options, modals and toast).
+  `tailwind.config.js` remains the separate browser Tailwind theme configuration;
+  the CDN still supplies the base reset. Do not use `@apply`, add dependencies,
+  or introduce a CSS compiler/build step.
 - Preserve CDN order: Tailwind, Lucide, canvas-confetti, Tailwind config; custom
   CSS follows. Keep `app.js` at the end of the body and initialization in
   `window.onload`; inline handlers require globally accessible functions.

@@ -10,6 +10,11 @@ static-only servers cannot run the app's PHP API. CDN scripts and Google Fonts
 require internet access.
 
 - `index.html`, `app.js`, `styles.css` and `tailwind.config.js` are the frontend.
+- App styling lives in plain `styles.css`: static and JavaScript-generated
+  markup use semantic component classes and short state toggles, not Tailwind
+  utility strings. Responsive, hover, focus and disabled styling stays in CSS.
+  `tailwind.config.js` is the separate browser theme; the Tailwind CDN still
+  provides the base reset. There is no CSS compiler, `@apply` or build step.
 - `data/catalog.json` supplies starter profiles, task templates and reward prices.
 - Virtual `/api.php` is handled by `server/api.php`; `state/state.json` stores the
   full schema-2 family snapshot. The frontend never writes the source catalog.

@@ -15,256 +15,256 @@
     <script src="tailwind.config.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="pb-24 md:pb-6 antialiased">
+<body>
 
     <!-- App Main Container -->
-    <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col relative bg-darkbg border-x border-darkborder shadow-2xl overflow-hidden min-w-[320px]">
+    <div id="app" class="app-shell">
 
         <!-- TOP HEADER -->
-        <header class="bg-gradient-to-r from-darkcard via-slate-900 to-darkcard p-4 pt-5 border-b border-darkborder relative z-10">
-            <div class="flex justify-between items-center mb-3">
-                <div class="flex items-center space-x-2.5">
-                    <div class="bg-valored/20 p-2 rounded-xl border border-valored/40 text-valored glow-red">
-                        <i data-lucide="gamepad-2" class="w-6 h-6"></i>
+        <header class="app-header">
+            <div class="header-toolbar">
+                <div class="brand">
+                    <div class="brand-icon">
+                        <i data-lucide="gamepad-2" class="brand-symbol"></i>
                     </div>
                     <div>
-                        <h1 class="text-lg font-bold tracking-wider text-white leading-none flex items-center gap-1.5">
-                            CHORE QUEST <span class="text-[10px] bg-valored text-white px-1.5 py-0.5 rounded font-extrabold tracking-widest">SQUAD</span>
+                        <h1 class="brand-title">
+                            CHORE QUEST <span class="brand-badge">SQUAD</span>
                         </h1>
-                        <p class="text-[11px] text-slate-400 mt-0.5" id="mode-subtitle">Choose your profile to start</p>
+                        <p class="brand-subtitle" id="mode-subtitle">Choose your profile to start</p>
                     </div>
                 </div>
 
                 <!-- Parent/Kid Mode Toggle Switch -->
-                <button onclick="toggleParentMode()" id="mode-toggle-btn" class="flex items-center space-x-1.5 bg-slate-800/80 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-200 transition-all btn-bounce">
-                    <i data-lucide="shield" class="w-3.5 h-3.5 text-neoncyan"></i>
+                <button onclick="toggleParentMode()" id="mode-toggle-btn" class="parent-toggle">
+                    <i data-lucide="shield" class="parent-toggle-icon"></i>
                     <span id="mode-btn-text">Parent PIN</span>
                 </button>
             </div>
 
             <!-- Player Switcher Bar -->
-            <div id="kid-selector-bar" aria-label="Switch child (locks parent controls)" class="flex space-x-2.5 overflow-x-auto pt-1 pb-1 no-scrollbar hidden">
+            <div id="kid-selector-bar" aria-label="Switch child (locks parent controls)" class="player-tabs hidden">
                 <!-- Dynamic Gamer Profiles inserted here -->
             </div>
         </header>
 
         <!-- MAIN CONTENT AREA -->
-        <main class="flex-1 p-4 space-y-4 overflow-y-auto">
+        <main class="app-content">
 
-            <section id="view-entry" class="space-y-4">
-                <h2 id="entry-heading" tabindex="-1" class="text-xl font-bold">Who is using Chore Quest?</h2>
-                <p id="entry-help" class="text-sm text-slate-300">Choose your name to see what you need to do today, choose extra chores and spend your Coins.</p>
-                <div id="entry-players" class="grid gap-3"></div>
-                <button onclick="enterParent()" class="w-full bg-cyan-950 border border-cyan-600 rounded-2xl p-5 text-left text-lg font-bold">🛡️ Parent → <span class="block text-sm font-normal text-slate-300 mt-1">Enter PIN to manage players, chores and rewards</span></button>
-                <p class="text-sm text-slate-300">Parent opens Admin without selecting a child. Saved player names are kept; Parent can rename or restore players.</p>
+            <section id="view-entry" class="app-view">
+                <h2 id="entry-heading" tabindex="-1" class="entry-title">Who is using Chore Quest?</h2>
+                <p id="entry-help" class="help-text">Choose your name to see what you need to do today, choose extra chores and spend your Coins.</p>
+                <div id="entry-players" class="profile-choices"></div>
+                <button onclick="enterParent()" class="parent-choice">🛡️ Parent → <span class="parent-choice-help">Enter PIN to manage players, chores and rewards</span></button>
+                <p class="help-text">Parent opens Admin without selecting a child. Saved player names are kept; Parent can rename or restore players.</p>
             </section>
 
             <!-- VIEW: QUESTS (CHORES) -->
-            <section id="view-chores" class="space-y-4 hidden">
+            <section id="view-chores" class="app-view hidden">
 
                 <!-- Lifetime XP & Coins Banner -->
-                <div id="kid-hero-card" class="bg-gradient-to-br from-darkcard to-slate-900 rounded-2xl p-4 border border-darkborder relative overflow-hidden shadow-lg">
-                    <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-valored/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div id="kid-hero-card" class="hero-card">
+                    <div class="hero-glow"></div>
 
-                    <div class="flex justify-between items-start relative z-10">
-                        <div class="flex items-center space-x-3">
-                            <div class="relative">
-                                <span id="hero-avatar" class="text-3xl bg-slate-800 p-2.5 rounded-2xl border border-slate-700 block">🎮</span>
+                    <div class="hero-summary">
+                        <div class="card-identity">
+                            <div class="hero-avatar-wrap">
+                                <span id="hero-avatar" class="hero-avatar">🎮</span>
                             </div>
                             <div>
-                                <h2 id="hero-name" tabindex="-1" class="text-lg font-bold text-white font-heading tracking-wide"></h2>
-                                <div class="flex items-center space-x-2 mt-0.5">
-                                    <span class="text-[10px] bg-slate-800 text-amber-400 font-bold px-2 py-0.5 rounded-full border border-amber-400/30 flex items-center gap-1">
-                                        <i data-lucide="flame" class="w-3 h-3 text-amber-400 fill-amber-400"></i> <span id="hero-streak">0 Day Streak</span>
+                                <h2 id="hero-name" tabindex="-1" class="hero-name"></h2>
+                                <div class="hero-streak-row">
+                                    <span class="streak-badge">
+                                        <i data-lucide="flame" class="streak-icon"></i> <span id="hero-streak">0 Day Streak</span>
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="text-right">
-                            <div class="text-[10px] text-slate-400 font-bold tracking-widest uppercase">Lifetime XP</div>
-                            <div id="hero-points" class="text-2xl font-black font-heading text-neonyellow drop-shadow">0</div>
-                            <div id="hero-coins" class="text-xs text-amber-300 font-bold">0 Coins</div>
+                        <div class="player-balances">
+                            <div class="hero-xp-label">Lifetime XP</div>
+                            <div id="hero-points" class="hero-xp">0</div>
+                            <div id="hero-coins" class="hero-coins">0 Coins</div>
                         </div>
                     </div>
 
-                    <p id="reading-progress" class="mt-3 text-xs text-slate-300" aria-live="polite"></p>
+                    <p id="reading-progress" class="reading-progress" aria-live="polite"></p>
                 </div>
 
-                <p class="text-sm text-slate-300">Coins buy rewards. Lifetime XP records everything you have earned and is never spent. Finish a chore first, then tap “I did it”. Some chores need a parent to check them before you earn anything.</p>
+                <p class="help-text">Coins buy rewards. Lifetime XP records everything you have earned and is never spent. Finish a chore first, then tap “I did it”. Some chores need a parent to check them before you earn anything.</p>
                 <!-- Filter Tabs for Tasks -->
                 <details>
-                <summary class="text-sm text-slate-300 py-2 cursor-pointer">Today, parent review &amp; past chores</summary>
-                <div class="flex bg-darkcard p-1 rounded-xl text-xs font-bold border border-darkborder text-slate-400">
-                    <button onclick="setTaskTab('active')" id="tab-btn-active" class="flex-1 py-2 rounded-lg text-center transition-all bg-valored text-white font-heading tracking-wider shadow">
+                <summary class="history-summary">Today, parent review &amp; past chores</summary>
+                <div class="task-tabs">
+                    <button onclick="setTaskTab('active')" id="tab-btn-active" class="task-tab is-active">
                         Today (<span id="count-active">0</span>)
                     </button>
-                    <button onclick="setTaskTab('pending')" id="tab-btn-pending" class="flex-1 py-2 rounded-lg text-center transition-all hover:text-white font-heading tracking-wider">
+                    <button onclick="setTaskTab('pending')" id="tab-btn-pending" class="task-tab">
                         Review (<span id="count-pending">0</span>)
                     </button>
-                    <button onclick="setTaskTab('completed')" id="tab-btn-completed" class="flex-1 py-2 rounded-lg text-center transition-all hover:text-white font-heading tracking-wider">
+                    <button onclick="setTaskTab('completed')" id="tab-btn-completed" class="task-tab">
                         Done (<span id="count-completed">0</span>)
                     </button>
-                    <button onclick="setTaskTab('missed')" id="tab-btn-missed" class="flex-1 py-2 rounded-lg text-center transition-all hover:text-white font-heading tracking-wider">
+                    <button onclick="setTaskTab('missed')" id="tab-btn-missed" class="task-tab">
                         Missed / expired (<span id="count-missed">0</span>)
                     </button>
                 </div>
                 </details>
 
                 <!-- Chores Quest List Container -->
-                <div id="chores-list" class="space-y-3">
+                <div id="chores-list" class="chore-list">
                     <!-- Dynamic Chores Here -->
                 </div>
-                <section id="chore-choices" class="space-y-3" aria-labelledby="choices-heading">
-                    <h3 id="choices-heading" class="font-bold text-lg">Choose an extra chore</h3>
-                    <p class="text-sm text-slate-300">Choose a personal chore below, then do it. Household jobs belong to one child: ask a parent to assign them first. Never take someone else’s job.</p>
-                    <div id="catalog-choices" class="space-y-3"></div>
+                <section id="chore-choices" class="chore-choices" aria-labelledby="choices-heading">
+                    <h3 id="choices-heading" class="section-title">Choose an extra chore</h3>
+                    <p class="help-text">Choose a personal chore below, then do it. Household jobs belong to one child: ask a parent to assign them first. Never take someone else’s job.</p>
+                    <div id="catalog-choices" class="catalog-choices"></div>
                 </section>
 
             </section>
 
             <!-- VIEW: REWARD SHOP -->
-            <section id="view-shop" class="space-y-4 hidden">
-                <div class="bg-gradient-to-r from-slate-900 via-darkcard to-slate-900 rounded-2xl p-4 border border-darkborder flex justify-between items-center shadow-md">
+            <section id="view-shop" class="app-view hidden">
+                <div class="shop-banner">
                     <div>
-                        <h2 class="text-base font-bold font-heading text-white flex items-center gap-2">
-                            <i data-lucide="shopping-cart" class="w-5 h-5 text-robloxblue"></i> Gamer Loot Vault
+                        <h2 class="shop-title">
+                            <i data-lucide="shopping-cart" class="shop-icon"></i> Gamer Loot Vault
                         </h2>
-                        <p class="text-xs text-slate-400 mt-0.5">Spend Coins, keep your lifetime XP.</p>
+                        <p class="shop-subtitle">Spend Coins, keep your lifetime XP.</p>
                     </div>
-                    <div class="bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800 text-right">
-                        <span class="text-[10px] block text-slate-400 uppercase tracking-wider font-bold">Coin Vault</span>
-                        <span id="shop-balance" class="text-lg font-black font-heading text-neonyellow">0 Coins</span>
+                    <div class="coin-vault">
+                        <span class="coin-vault-label">Coin Vault</span>
+                        <span id="shop-balance" class="coin-vault-balance">0 Coins</span>
                     </div>
                 </div>
 
-                <p class="text-xs text-slate-400">Micro perks: 50–150 Coins · Mid goals: 350–750 · Major savings: 2500–5000. Requests reserve Coins until a parent fulfills or declines and refunds. No guaranteed money conversion: cash, currency cards, funded outings and gear must be added and priced by a parent first. A minor chore pass is applied by a parent deleting the agreed task, without XP.</p>
-                <div id="redemptions-list" class="space-y-2" aria-live="polite"></div>
+                <p class="muted-text">Micro perks: 50–150 Coins · Mid goals: 350–750 · Major savings: 2500–5000. Requests reserve Coins until a parent fulfills or declines and refunds. No guaranteed money conversion: cash, currency cards, funded outings and gear must be added and priced by a parent first. A minor chore pass is applied by a parent deleting the agreed task, without XP.</p>
+                <div id="redemptions-list" class="redemptions-list" aria-live="polite"></div>
                 <!-- Rewards Grid -->
-                <div id="rewards-list" class="grid grid-cols-1 gap-3">
+                <div id="rewards-list" class="rewards-list">
                     <!-- Dynamic Rewards Here -->
                 </div>
             </section>
 
             <!-- VIEW: PARENT ADMIN CONTROL (Only visible in Parent Mode) -->
-            <section id="view-parent" class="space-y-4 hidden">
-                <div class="flex justify-between items-center">
-                    <h2 class="font-bold text-lg">🛡️ Parent Admin Dashboard</h2>
-                    <span class="text-[10px] bg-neoncyan/20 text-neoncyan font-bold px-2 py-1 rounded-full border border-neoncyan/40">Admin Unlocked</span>
+            <section id="view-parent" class="app-view hidden">
+                <div class="section-heading">
+                    <h2 class="section-title">🛡️ Parent Admin Dashboard</h2>
+                    <span class="admin-badge">Admin Unlocked</span>
                 </div>
-                <p id="parent-scope" class="text-sm text-slate-300"></p>
-                <div id="parent-review-links" class="flex flex-wrap gap-2"></div>
+                <p id="parent-scope" class="help-text"></p>
+                <div id="parent-review-links" class="review-links"></div>
 
                 <!-- Master Overview Tabs / Sections -->
-                <div class="bg-darkcard p-4 rounded-2xl border border-darkborder space-y-3 shadow-md">
-                    <h3 class="font-bold text-white font-heading text-sm flex items-center gap-2">
-                        <i data-lucide="bar-chart-2" class="w-4 h-4 text-neoncyan"></i> Squad Chore &amp; Completion Overview
+                <div class="admin-panel">
+                    <h3 class="panel-title">
+                        <i data-lucide="bar-chart-2" class="panel-icon"></i> Squad Chore &amp; Completion Overview
                     </h3>
-                    <p class="text-xs text-slate-300">Overview of all active chores, pending review, completions, and misses for each player.</p>
-                    <div id="parent-squad-overview" class="space-y-3">
+                    <p class="detail-text">Overview of all active chores, pending review, completions, and misses for each player.</p>
+                    <div id="parent-squad-overview" class="squad-list">
                         <!-- Dynamic squad overview rendered here -->
                     </div>
                 </div>
 
                 <!-- Manage Players -->
-                <div class="bg-darkcard p-4 rounded-2xl border border-darkborder space-y-3 shadow-md">
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-white font-heading text-sm flex items-center gap-2">
-                            <i data-lucide="users" class="w-4 h-4 text-neoncyan"></i> Manage Players (SQUAD)
+                <div class="admin-panel">
+                    <div class="section-heading">
+                        <h3 class="panel-title">
+                            <i data-lucide="users" class="panel-icon"></i> Manage Players (SQUAD)
                         </h3>
-                        <button onclick="openAddKidModal()" class="text-xs bg-neoncyan/10 text-neoncyan border border-neoncyan/30 font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1 hover:bg-neoncyan/20 btn-bounce">
-                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add player
+                        <button onclick="openAddKidModal()" class="add-player-button">
+                            <i data-lucide="plus" class="badge-icon"></i> Add player
                         </button>
                     </div>
-                    <p class="text-xs text-slate-300">Archive, don’t delete: keeps balances, chores and history while pausing the player. Archived players can be restored here; no catch-up penalties.</p>
-                    <div id="parent-kids-list" class="divide-y divide-slate-800">
+                    <p class="detail-text">Archive, don’t delete: keeps balances, chores and history while pausing the player. Archived players can be restored here; no catch-up penalties.</p>
+                    <div id="parent-kids-list" class="managed-players">
                         <!-- Dynamic Parent Kids List -->
                     </div>
                 </div>
 
                 <!-- Master Catalog & Rewards Listing -->
-                <div class="bg-darkcard p-4 rounded-2xl border border-darkborder space-y-3 shadow-md">
-                    <h3 class="font-bold text-white font-heading text-sm flex items-center gap-2">
-                        <i data-lucide="book-open" class="w-4 h-4 text-purple-400"></i> Master Chore Templates &amp; Rewards Catalog
+                <div class="admin-panel">
+                    <h3 class="panel-title">
+                        <i data-lucide="book-open" class="catalog-panel-icon"></i> Master Chore Templates &amp; Rewards Catalog
                     </h3>
-                    <p class="text-xs text-slate-300">Review all available catalog templates and active rewards in the vault.</p>
-                    <div class="grid grid-cols-1 gap-3">
+                    <p class="detail-text">Review all available catalog templates and active rewards in the vault.</p>
+                    <div class="catalog-sections">
                         <div>
-                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Source Chore Templates</h4>
-                            <div id="parent-catalog-chores" class="max-h-48 overflow-y-auto space-y-1.5 pr-1"></div>
+                            <h4 class="catalog-heading">Source Chore Templates</h4>
+                            <div id="parent-catalog-chores" class="catalog-scroll"></div>
                         </div>
-                        <div class="pt-2 border-t border-slate-800">
-                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Vault Rewards</h4>
-                            <div id="parent-catalog-rewards" class="max-h-48 overflow-y-auto space-y-1.5 pr-1"></div>
+                        <div class="catalog-rewards-section">
+                            <h4 class="catalog-heading">Vault Rewards</h4>
+                            <div id="parent-catalog-rewards" class="catalog-scroll"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Quick Actions for Tasks & Loot -->
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="openAddChoreModal()" class="bg-gradient-to-br from-emerald-950 to-slate-900 border border-emerald-500/40 p-4 rounded-2xl text-left hover:border-emerald-400 transition-all btn-bounce shadow-md">
-                        <div class="w-8 h-8 bg-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center mb-2">
-                            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                <div class="quick-actions">
+                    <button onclick="openAddChoreModal()" class="quick-action quick-action-chore">
+                        <div class="quick-action-badge">
+                            <i data-lucide="plus-circle" class="nav-icon"></i>
                         </div>
-                        <h4 class="font-bold font-heading text-white text-sm">Create Quest</h4>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Custom task for one named player.</p>
+                        <h4 class="quick-action-title">Create Quest</h4>
+                        <p class="quick-action-help">Custom task for one named player.</p>
                     </button>
 
-                    <button onclick="openAddRewardModal()" class="bg-gradient-to-br from-purple-950 to-slate-900 border border-purple-500/40 p-4 rounded-2xl text-left hover:border-purple-400 transition-all btn-bounce shadow-md">
-                        <div class="w-8 h-8 bg-purple-500/20 text-purple-400 rounded-xl flex items-center justify-center mb-2">
-                            <i data-lucide="gift" class="w-5 h-5"></i>
+                    <button onclick="openAddRewardModal()" class="quick-action quick-action-reward">
+                        <div class="quick-action-badge">
+                            <i data-lucide="gift" class="nav-icon"></i>
                         </div>
-                        <h4 class="font-bold font-heading text-white text-sm">Add Loot Reward</h4>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Add gaming perks, passes, or cash-ins.</p>
+                        <h4 class="quick-action-title">Add Loot Reward</h4>
+                        <p class="quick-action-help">Add gaming perks, passes, or cash-ins.</p>
                     </button>
                 </div>
 
-                <div class="bg-darkcard p-4 rounded-2xl border border-darkborder space-y-3">
-                    <h3 class="font-bold text-white font-heading text-sm">Source Catalog → Deploy Template</h3>
-                    <p class="text-xs text-slate-400">Deploy templates to players. Shared chores pay ONE named player. Weekly tasks repeat Mon–Sun.</p>
-                    <form onsubmit="deployTemplate(event)" class="space-y-3">
-                        <label for="template-choice" class="block text-xs">Task template</label>
-                        <select id="template-choice" onchange="renderTemplateDetails()" class="w-full bg-slate-900 rounded-xl p-2 text-sm"></select>
-                        <p id="template-details" class="text-xs text-slate-300" aria-live="polite"></p>
-                        <label for="template-player" class="block text-xs">Target player (required, including shared jobs)</label>
-                        <select id="template-player" required class="w-full bg-slate-900 rounded-xl p-2 text-sm"></select>
+                <div class="template-panel">
+                    <h3 class="panel-title">Source Catalog → Deploy Template</h3>
+                    <p class="muted-text">Deploy templates to players. Shared chores pay ONE named player. Weekly tasks repeat Mon–Sun.</p>
+                    <form onsubmit="deployTemplate(event)" class="app-form">
+                        <label for="template-choice" class="template-label">Task template</label>
+                        <select id="template-choice" onchange="renderTemplateDetails()" class="template-input"></select>
+                        <p id="template-details" class="detail-text" aria-live="polite"></p>
+                        <label for="template-player" class="template-label">Target player (required, including shared jobs)</label>
+                        <select id="template-player" required class="template-input"></select>
                         <div id="template-date-field" class="hidden">
-                            <label for="template-date" class="block text-xs">Training session date</label>
-                            <input id="template-date" type="date" required class="w-full bg-slate-900 rounded-xl p-2 text-sm">
+                            <label for="template-date" class="template-label">Training session date</label>
+                            <input id="template-date" type="date" required class="template-input">
                         </div>
-                        <button id="template-deploy" type="submit" class="bg-emerald-700 disabled:opacity-40 rounded-xl px-3 py-2 text-xs font-bold">Deploy selected template</button>
+                        <button id="template-deploy" type="submit" class="deploy-template-button">Deploy selected template</button>
                     </form>
-                    <button onclick="importDefaultRewards()" class="border border-purple-500 rounded-xl px-3 py-2 text-xs">Add missing default rewards (confirm first)</button>
+                    <button onclick="importDefaultRewards()" class="import-rewards-button">Add missing default rewards (confirm first)</button>
                 </div>
 
-                <section class="bg-darkcard p-4 rounded-2xl border border-red-800 space-y-3" aria-labelledby="reset-heading">
-                    <h3 id="reset-heading" class="font-bold text-sm">Prototype data</h3>
-                    <p class="text-xs text-slate-300">data/catalog.json supplies first-run defaults; the PHP service saves one shared family for all devices using this server. Reset irreversibly removes ALL profiles (including archived), balances, custom tasks/rewards, history, requests and saved PIN for ALL those devices. Type RESET to confirm. Reload starts with Alex/Chris and current catalog defaults, PIN 1234. Old browser data is ignored and left untouched.</p>
-                    <button onclick="resetPrototypeData()" class="border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm font-bold">Reset prototype data</button>
-                    <p class="text-xs text-slate-400">Irreversible. You must type RESET in the confirmation to proceed.</p>
+                <section class="reset-panel" aria-labelledby="reset-heading">
+                    <h3 id="reset-heading" class="choice-title">Prototype data</h3>
+                    <p class="detail-text">data/catalog.json supplies first-run defaults; the PHP service saves one shared family for all devices using this server. Reset irreversibly removes ALL profiles (including archived), balances, custom tasks/rewards, history, requests and saved PIN for ALL those devices. Type RESET to confirm. Reload starts with Alex/Chris and current catalog defaults, PIN 1234. Old browser data is ignored and left untouched.</p>
+                    <button onclick="resetPrototypeData()" class="reset-button">Reset prototype data</button>
+                    <p class="muted-text">Irreversible. You must type RESET in the confirmation to proceed.</p>
                 </section>
 
-                <div class="bg-slate-900/90 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 flex items-center gap-2">
-                    <i data-lucide="lock" class="w-4 h-4 text-amber-400 shrink-0"></i>
-                    <span>Default Parent Passcode is <strong class="text-amber-300 font-mono">1234</strong>. Tap "Exit Admin" to lock.</span>
+                <div class="pin-notice">
+                    <i data-lucide="lock" class="pin-notice-icon"></i>
+                    <span>Default Parent Passcode is <strong class="pin-notice-code">1234</strong>. Tap "Exit Admin" to lock.</span>
                 </div>
             </section>
 
         </main>
 
         <!-- BOTTOM NAVIGATION BAR -->
-        <nav id="main-nav" aria-label="Main navigation" class="hidden fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-darkcard/95 backdrop-blur-md border-t border-darkborder px-6 py-2.5 flex justify-around items-center z-20">
-            <button onclick="switchMainView('chores')" id="nav-chores" class="flex flex-col items-center text-valored font-bold transition-all btn-bounce">
-                <i data-lucide="sword" class="w-5 h-5"></i>
-                <span class="text-xs font-heading mt-1 tracking-wider">My chores</span>
+        <nav id="main-nav" aria-label="Main navigation" class="main-nav hidden">
+            <button onclick="switchMainView('chores')" id="nav-chores" class="nav-button is-active">
+                <i data-lucide="sword" class="nav-icon"></i>
+                <span class="nav-label">My chores</span>
             </button>
-            <button onclick="switchMainView('shop')" id="nav-shop" class="flex flex-col items-center text-slate-500 font-bold hover:text-slate-300 transition-all btn-bounce">
-                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
-                <span class="text-xs font-heading mt-1 tracking-wider">Rewards</span>
+            <button onclick="switchMainView('shop')" id="nav-shop" class="nav-button">
+                <i data-lucide="shopping-bag" class="nav-icon"></i>
+                <span class="nav-label">Rewards</span>
             </button>
-            <button onclick="switchMainView('parent')" id="nav-parent" class="flex flex-col items-center text-slate-500 font-bold hover:text-slate-300 transition-all btn-bounce hidden">
-                <i data-lucide="sliders" class="w-5 h-5"></i>
-                <span class="text-[10px] font-heading mt-1 tracking-wider">Admin</span>
+            <button onclick="switchMainView('parent')" id="nav-parent" class="nav-button hidden">
+                <i data-lucide="sliders" class="nav-icon"></i>
+                <span class="nav-label nav-admin-label">Admin</span>
             </button>
         </nav>
 
@@ -273,146 +273,146 @@
     <!-- MODALS -->
 
     <!-- Modal: Add / Edit Quest -->
-    <div id="modal-chore" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden backdrop-blur-md">
-        <div class="bg-darkcard border border-darkborder rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 id="modal-chore-title" class="font-bold text-base font-heading text-white flex items-center gap-2">
-                    <i data-lucide="crosshair" class="w-5 h-5 text-valored"></i> Create New Quest
+    <div id="modal-chore" class="modal hidden">
+        <div class="modal-panel">
+            <div class="modal-heading">
+                <h3 id="modal-chore-title" class="modal-title">
+                    <i data-lucide="crosshair" class="chore-modal-icon"></i> Create New Quest
                 </h3>
-                <button onclick="closeModal('modal-chore')" aria-label="Close chore form" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="closeModal('modal-chore')" aria-label="Close chore form" class="modal-close"><i data-lucide="x" class="nav-icon"></i></button>
             </div>
-            <form id="form-chore" onsubmit="saveChore(event)" class="space-y-3">
+            <form id="form-chore" onsubmit="saveChore(event)" class="app-form">
                 <input type="hidden" id="chore-id">
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Quest Title</label>
-                    <input type="text" id="chore-name" required placeholder="e.g. Clean Desk & Cable Org, Take Out Trash" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white outline-none focus:border-valored">
+                    <label class="form-label">Quest Title</label>
+                    <input type="text" id="chore-name" required placeholder="e.g. Clean Desk & Cable Org, Take Out Trash" class="form-input chore-input">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Assign To Player</label>
-                    <select id="chore-assigned" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white outline-none focus:border-valored">
+                    <label class="form-label">Assign To Player</label>
+                    <select id="chore-assigned" class="form-input chore-input">
                         <!-- Dynamic options -->
                     </select>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="form-columns">
                     <div>
-                        <label class="block text-xs font-bold text-emerald-400 mb-1">+ Victory XP</label>
-                        <input type="number" id="chore-points" min="1" max="1000" step="1" value="25" required class="w-full px-3 py-2 bg-slate-900 border border-emerald-500/40 text-emerald-400 font-extrabold rounded-xl text-sm outline-none">
+                        <label class="form-label earnings-label">+ Victory XP</label>
+                        <input type="number" id="chore-points" min="1" max="1000" step="1" value="25" required class="form-input earnings-input">
                     </div>
                     <div>
-                        <label for="chore-penalty" class="block text-xs font-bold text-valored mb-1">Nominal penalty (0–1000)</label>
-                        <input type="number" id="chore-penalty" min="0" max="1000" step="1" value="3" required class="w-full px-3 py-2 bg-slate-900 border border-valored/40 text-valored font-extrabold rounded-xl text-sm outline-none">
+                        <label for="chore-penalty" class="form-label penalty-label">Nominal penalty (0–1000)</label>
+                        <input type="number" id="chore-penalty" min="0" max="1000" step="1" value="3" required class="form-input penalty-input">
                     </div>
                 </div>
-                <div class="text-xs text-slate-300 space-y-2">
+                <div class="chore-options">
                     <label for="chore-coins">Victory Coins (0–1000)</label>
-                    <input type="number" id="chore-coins" min="0" max="1000" step="1" value="10" required class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl">
+                    <input type="number" id="chore-coins" min="0" max="1000" step="1" value="10" required class="coin-input">
                     <p>Actual missed loss is bounded by half the award, balance and original-day remaining earnings; nominal values are not guaranteed deductions.</p>
-                    <label for="chore-cadence" class="block">Cadence</label>
-                    <select id="chore-cadence" class="w-full bg-slate-900 rounded-xl p-2"><option value="on-demand">On-demand (one job)</option><option value="daily">Daily (local midnight)</option><option value="weekly">Weekly (Mon–Sun)</option></select>
-                    <label class="block"><input type="checkbox" id="chore-mandatory"> Mandatory for daily streak</label>
-                    <label class="block"><input type="checkbox" id="chore-review"> Parent review (always for ≥75 XP or ≥75 Coins)</label>
+                    <label for="chore-cadence" class="option-label">Cadence</label>
+                    <select id="chore-cadence" class="cadence-input"><option value="on-demand">On-demand (one job)</option><option value="daily">Daily (local midnight)</option><option value="weekly">Weekly (Mon–Sun)</option></select>
+                    <label class="option-label"><input type="checkbox" id="chore-mandatory"> Mandatory for daily streak</label>
+                    <label class="option-label"><input type="checkbox" id="chore-review"> Parent review (always for ≥75 XP or ≥75 Coins)</label>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Select Game / Icon Badge</label>
-                    <div class="flex gap-2 overflow-x-auto py-1" id="emoji-picker-chore">
+                    <label class="form-label">Select Game / Icon Badge</label>
+                    <div class="emoji-picker" id="emoji-picker-chore">
                         <!-- Emoji buttons -->
                     </div>
                     <input type="hidden" id="chore-emoji" value="🧹">
                 </div>
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="closeModal('modal-chore')" class="flex-1 py-2.5 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs uppercase">Cancel</button>
-                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-valored text-white font-bold font-heading text-xs tracking-wider shadow-lg hover:bg-red-600 btn-bounce">Deploy Quest</button>
+                <div class="form-actions">
+                    <button type="button" onclick="closeModal('modal-chore')" class="cancel-button">Cancel</button>
+                    <button type="submit" class="submit-button submit-chore">Deploy Quest</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Modal: Add Gamer Profile -->
-    <div id="modal-kid" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden backdrop-blur-md">
-        <div class="bg-darkcard border border-darkborder rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="font-bold text-base font-heading text-white flex items-center gap-2">
-                    <i data-lucide="user-plus" class="w-5 h-5 text-neoncyan"></i> Add Gamer Tag Profile
+    <div id="modal-kid" class="modal hidden">
+        <div class="modal-panel">
+            <div class="modal-heading">
+                <h3 class="modal-title">
+                    <i data-lucide="user-plus" class="player-modal-icon"></i> Add Gamer Tag Profile
                 </h3>
-                <button onclick="closeModal('modal-kid')" aria-label="Close player form" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="closeModal('modal-kid')" aria-label="Close player form" class="modal-close"><i data-lucide="x" class="nav-icon"></i></button>
             </div>
-            <form id="form-kid" onsubmit="saveKid(event)" class="space-y-3">
+            <form id="form-kid" onsubmit="saveKid(event)" class="app-form">
                 <input type="hidden" id="kid-id">
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Gamer Tag / Name</label>
-                    <input type="text" id="kid-name" required placeholder="e.g. Shadow_14, Alex" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white outline-none focus:border-neoncyan">
+                    <label class="form-label">Gamer Tag / Name</label>
+                    <input type="text" id="kid-name" required placeholder="e.g. Shadow_14, Alex" class="form-input player-input">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Avatar Badge</label>
-                    <div class="flex gap-2 overflow-x-auto py-1" id="emoji-picker-kid"></div>
+                    <label class="form-label">Avatar Badge</label>
+                    <div class="emoji-picker" id="emoji-picker-kid"></div>
                     <input type="hidden" id="kid-avatar" value="🎮">
                 </div>
                 <div>
-                    <label for="kid-points" class="block text-xs font-bold text-slate-300 mb-1">Starting Coins (XP starts at zero)</label>
-                    <input type="number" id="kid-points" value="0" min="0" max="1000" step="1" required class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white outline-none">
+                    <label for="kid-points" class="form-label">Starting Coins (XP starts at zero)</label>
+                    <input type="number" id="kid-points" value="0" min="0" max="1000" step="1" required class="form-input">
                 </div>
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="closeModal('modal-kid')" class="flex-1 py-2.5 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs uppercase">Cancel</button>
-                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-neoncyan text-slate-950 font-bold font-heading text-xs tracking-wider shadow-lg hover:bg-cyan-400 btn-bounce">Save Profile</button>
+                <div class="form-actions">
+                    <button type="button" onclick="closeModal('modal-kid')" class="cancel-button">Cancel</button>
+                    <button type="submit" class="submit-button submit-player">Save Profile</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Modal: Add Reward Item -->
-    <div id="modal-reward" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden backdrop-blur-md">
-        <div class="bg-darkcard border border-darkborder rounded-2xl w-full max-w-sm p-5 space-y-4 shadow-2xl">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 class="font-bold text-base font-heading text-white flex items-center gap-2">
-                    <i data-lucide="gift" class="w-5 h-5 text-purple-400"></i> Create Loot Reward
+    <div id="modal-reward" class="modal hidden">
+        <div class="modal-panel">
+            <div class="modal-heading">
+                <h3 class="modal-title">
+                    <i data-lucide="gift" class="reward-modal-icon"></i> Create Loot Reward
                 </h3>
-                <button onclick="closeModal('modal-reward')" aria-label="Close reward form" class="text-slate-400 hover:text-slate-200"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="closeModal('modal-reward')" aria-label="Close reward form" class="modal-close"><i data-lucide="x" class="nav-icon"></i></button>
             </div>
-            <form id="form-reward" onsubmit="saveReward(event)" class="space-y-3">
+            <form id="form-reward" onsubmit="saveReward(event)" class="app-form">
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Reward Title</label>
-                    <input type="text" id="reward-title" required placeholder="e.g. +1 hr Roblox/Valorant Session, 800 Robux" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-sm text-white outline-none focus:border-purple-500">
+                    <label class="form-label">Reward Title</label>
+                    <input type="text" id="reward-title" required placeholder="e.g. +1 hr Roblox/Valorant Session, 800 Robux" class="form-input reward-input">
                 </div>
                 <div>
-                    <label for="reward-cost" class="block text-xs font-bold text-slate-300 mb-1">Cost (Coins)</label>
-                    <input type="number" id="reward-cost" min="1" max="100000" step="1" value="100" required class="w-full px-3 py-2 bg-slate-900 border border-purple-500/40 text-neonyellow font-extrabold rounded-xl text-sm outline-none">
-                    <label for="reward-tier" class="block text-xs text-slate-300 mt-2">Reward tier</label>
-                    <select id="reward-tier" class="w-full px-3 py-2 bg-slate-900 rounded-xl text-sm text-white"><option value="1">1 · Micro (50–150 suggested)</option><option value="2">2 · Mid (350–750 suggested)</option><option value="3">3 · Major (2500–5000 suggested)</option></select>
+                    <label for="reward-cost" class="form-label">Cost (Coins)</label>
+                    <input type="number" id="reward-cost" min="1" max="100000" step="1" value="100" required class="form-input reward-cost-input">
+                    <label for="reward-tier" class="reward-tier-label">Reward tier</label>
+                    <select id="reward-tier" class="reward-tier-input"><option value="1">1 · Micro (50–150 suggested)</option><option value="2">2 · Mid (350–750 suggested)</option><option value="3">3 · Major (2500–5000 suggested)</option></select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-300 mb-1">Category Emoji</label>
-                    <div class="flex gap-2 overflow-x-auto py-1" id="emoji-picker-reward"></div>
+                    <label class="form-label">Category Emoji</label>
+                    <div class="emoji-picker" id="emoji-picker-reward"></div>
                     <input type="hidden" id="reward-emoji" value="🎮">
                 </div>
-                <div class="pt-2 flex gap-2">
-                    <button type="button" onclick="closeModal('modal-reward')" class="flex-1 py-2.5 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs uppercase">Cancel</button>
-                    <button type="submit" class="flex-1 py-2.5 rounded-xl bg-purple-600 text-white font-bold font-heading text-xs tracking-wider shadow-lg hover:bg-purple-700 btn-bounce">Add To Loot Shop</button>
+                <div class="form-actions">
+                    <button type="button" onclick="closeModal('modal-reward')" class="cancel-button">Cancel</button>
+                    <button type="submit" class="submit-button submit-reward">Add To Loot Shop</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- Modal: Parent Security Lock Entry -->
-    <div id="modal-pin" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 hidden backdrop-blur-md">
-        <div class="bg-darkcard border border-darkborder rounded-2xl w-full max-w-xs p-6 text-center space-y-4 shadow-2xl">
-            <div class="w-12 h-12 bg-valored/20 text-valored rounded-2xl flex items-center justify-center mx-auto border border-valored/40 glow-red">
-                <i data-lucide="shield-check" class="w-6 h-6"></i>
+    <div id="modal-pin" class="modal pin-modal hidden">
+        <div class="modal-panel pin-panel">
+            <div class="pin-emblem">
+                <i data-lucide="shield-check" class="brand-symbol"></i>
             </div>
             <div>
-                <h3 class="font-bold text-base font-heading text-white">Parent Passcode</h3>
-                <p class="text-xs text-slate-400 mt-1">Enter PIN (Default: <span class="font-mono font-bold text-neoncyan">1234</span>)</p>
+                <h3 class="pin-title">Parent Passcode</h3>
+                <p class="pin-help">Enter PIN (Default: <span class="pin-default-code">1234</span>)</p>
             </div>
-            <input type="password" id="pin-input" aria-label="Parent PIN" inputmode="numeric" maxlength="4" placeholder="••••" onkeydown="if (event.key === 'Enter') verifyPin()" class="w-full text-center text-2xl tracking-widest font-bold font-mono py-2 bg-slate-950 border border-slate-800 rounded-xl text-white outline-none focus:border-neoncyan">
-            <div class="flex gap-2">
-                <button onclick="closeModal('modal-pin')" class="flex-1 py-2 rounded-xl border border-slate-800 text-slate-400 font-bold text-xs uppercase">Cancel</button>
-                <button onclick="verifyPin()" class="flex-1 py-2 rounded-xl bg-valored text-white font-bold font-heading text-xs tracking-wider shadow-md hover:bg-red-600 btn-bounce">Authenticate</button>
+            <input type="password" id="pin-input" aria-label="Parent PIN" inputmode="numeric" maxlength="4" placeholder="••••" onkeydown="if (event.key === 'Enter') verifyPin()" class="pin-input">
+            <div class="pin-actions">
+                <button onclick="closeModal('modal-pin')" class="cancel-button">Cancel</button>
+                <button onclick="verifyPin()" class="submit-button submit-pin">Authenticate</button>
             </div>
         </div>
     </div>
 
     <!-- Notification Toast -->
-    <div id="toast" role="status" class="fixed top-4 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 text-white px-4 py-2.5 rounded-2xl text-xs font-bold shadow-2xl flex items-center gap-2 transition-all duration-300 -translate-y-20 opacity-0 pointer-events-none z-50 max-w-xs">
-        <i data-lucide="info" id="toast-icon" class="w-4 h-4 text-neoncyan"></i>
+    <div id="toast" role="status" class="toast">
+        <i data-lucide="info" id="toast-icon" class="toast-icon"></i>
         <span id="toast-msg">Quest Updated!</span>
     </div>
 

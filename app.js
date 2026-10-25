@@ -319,7 +319,7 @@
             container.innerHTML = '';
             activeKids().forEach(k => {
                 const button = document.createElement('button');
-                button.className = 'bg-darkcard border border-darkborder rounded-2xl p-5 text-left text-lg font-bold';
+                button.className = 'profile-choice';
                 button.textContent = `${k.avatar}  ${k.name} →`;
                 button.onclick = () => selectKid(k.id);
                 container.appendChild(button);
@@ -338,15 +338,11 @@
                 const btn = document.createElement('button');
                 btn.onclick = () => selectKid(kid.id);
                 btn.setAttribute('aria-pressed', String(isActive));
-                btn.className = `flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap btn-bounce ${
-                    isActive
-                    ? 'bg-valored text-white border border-red-400 shadow-md scale-105 glow-red'
-                    : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'
-                }`;
+                btn.className = `player-tab ${isActive ? 'is-selected' : ''}`;
                 btn.innerHTML = `
-                    <span class="text-sm">${escapeHTML(kid.avatar)}</span>
-                    <span class="font-heading">${escapeHTML(kid.name)}</span>
-                    <span class="bg-black/40 text-neonyellow px-1.5 py-0.2 rounded font-mono text-[10px] ml-1">${kid.xp}XP</span>
+                    <span class="player-tab-avatar">${escapeHTML(kid.avatar)}</span>
+                    <span class="player-tab-name">${escapeHTML(kid.name)}</span>
+                    <span class="player-tab-xp">${kid.xp}XP</span>
                 `;
                 container.appendChild(btn);
             });
@@ -382,7 +378,7 @@
             const kid = appState.kids.find(k => k.id === appState.activeKidId);
             if (appState.activeTab === 'active' && kid) {
                 const required = appState.chores.filter(c => c.assignedTo === kid.id && c.mandatory && c.status === 'active' && c.day <= today());
-                container.innerHTML = `<h3 class="font-bold text-lg">Required today · ${required.length} left</h3>${required.length ? '<p class="text-sm text-slate-300">Start with these assigned chores.</p>' : '<p class="text-sm text-emerald-300">No required chores left to do. Anything waiting for a parent still needs their check.</p>'}`;
+                container.innerHTML = `<h3 class="section-title">Required today · ${required.length} left</h3>${required.length ? '<p class="help-text">Start with these assigned chores.</p>' : '<p class="success-text">No required chores left to do. Anything waiting for a parent still needs their check.</p>'}`;
             }
 
             // Tab counter badges
@@ -396,10 +392,10 @@
             if (filtered.length === 0) {
                 if (appState.activeTab === 'active') return;
                 container.innerHTML = `
-                    <div class="text-center py-12 px-4 bg-darkcard rounded-2xl border border-darkborder">
-                        <div class="text-4xl mb-2">👾</div>
-                        <p class="font-bold text-white text-sm">No chores here yet</p>
-                        <button onclick="setTaskTab('active')" class="text-sm text-neoncyan p-3">Back to today & choose a chore</button>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👾</div>
+                        <p class="empty-state-title">No chores here yet</p>
+                        <button onclick="setTaskTab('active')" class="empty-state-action">Back to today & choose a chore</button>
                     </div>
                 `;
                 return;
@@ -410,12 +406,12 @@
                 if (appState.activeTab === 'active' && group(chore) !== lastGroup) {
                     lastGroup = group(chore);
                     const heading = document.createElement('h3');
-                    heading.className = 'font-bold text-lg pt-3';
+                    heading.className = 'chore-group-title';
                     heading.textContent = ['', 'Optional · already assigned to you', 'Coming up · assigned to you', 'Waiting for parent review'][lastGroup];
                     container.appendChild(heading);
                 }
                 const card = document.createElement('div');
-                card.className = "chore-card bg-darkcard p-3.5 rounded-2xl border border-darkborder flex items-center justify-between gap-3 shadow-md hover:border-slate-700 transition-all";
+                card.className = 'chore-card';
 
                 let actionArea = '';
 
@@ -423,51 +419,51 @@
                     const sharedConflict = sharedJobBlocked(chore);
                     const blocked = readingBlocked(chore) || sharedConflict || chore.day > today();
                     actionArea = `
-                        <button onclick="markChoreDone('${chore.id}')" ${blocked ? 'disabled' : ''} class="disabled:opacity-40 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-heading text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1 shadow-md shadow-emerald-950 btn-bounce">
-                            <i data-lucide="check" class="w-4 h-4"></i> ${chore.day > today() ? 'Scheduled' : sharedConflict ? 'Ask parent: owner conflict' : blocked ? 'Reading chosen' : needsReview(chore) && !appState.isParentMode ? 'I did it · ask for check' : 'I did it'}
+                        <button onclick="markChoreDone('${chore.id}')" ${blocked ? 'disabled' : ''} class="complete-chore-button">
+                            <i data-lucide="check" class="action-icon"></i> ${chore.day > today() ? 'Scheduled' : sharedConflict ? 'Ask parent: owner conflict' : blocked ? 'Reading chosen' : needsReview(chore) && !appState.isParentMode ? 'I did it · ask for check' : 'I did it'}
                         </button>
                     `;
                 } else if (chore.status === 'pending') {
                     if (appState.isParentMode) {
                         actionArea = `
-                            <div class="flex gap-1.5">
-                                <button onclick="approveChore('${chore.id}')" class="bg-emerald-500 text-slate-950 p-2 rounded-xl font-bold btn-bounce" aria-label="Approve quest" title="Approve (+${chore.points} XP, +${chore.coins} Coins)">
-                                    <i data-lucide="check" class="w-4 h-4"></i>
+                            <div class="review-actions">
+                                <button onclick="approveChore('${chore.id}')" class="approve-button" aria-label="Approve quest" title="Approve (+${chore.points} XP, +${chore.coins} Coins)">
+                                    <i data-lucide="check" class="action-icon"></i>
                                 </button>
-                                <button onclick="rejectChore('${chore.id}')" class="bg-valored text-white p-2 rounded-xl font-bold btn-bounce" aria-label="Reject quest" title="Missed (bounded Coin penalty only)">
-                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                <button onclick="rejectChore('${chore.id}')" class="reject-button" aria-label="Reject quest" title="Missed (bounded Coin penalty only)">
+                                    <i data-lucide="x" class="action-icon"></i>
                                 </button>
                             </div>
                         `;
                     } else {
-                        actionArea = `<span class="bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-lg">Awaiting Review</span>`;
+                        actionArea = `<span class="review-badge">Awaiting Review</span>`;
                     }
                 } else if (chore.status === 'completed') {
-                    actionArea = `<span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Cleared</span>`;
+                    actionArea = `<span class="cleared-badge"><i data-lucide="check-circle" class="badge-icon"></i> Cleared</span>`;
                 } else if (['missed','expired'].includes(chore.status)) {
-                    actionArea = `<span class="text-xs text-slate-300">${chore.status === 'expired' ? 'Expired · no loss' : `Actual: -${escapeHTML(chore.actualPenalty || 0)} Coins`}</span>`;
+                    actionArea = `<span class="detail-text">${chore.status === 'expired' ? 'Expired · no loss' : `Actual: -${escapeHTML(chore.actualPenalty || 0)} Coins`}</span>`;
                 }
 
                 let parentExtras = '';
                 if (appState.isParentMode && (chore.status === 'active' || chore.status === 'pending')) {
                     parentExtras = `
-                        <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-800">
-                            <button onclick="failChore('${chore.id}')" class="text-[10px] text-valored font-bold bg-valored/10 px-2 py-0.5 rounded">Mark missed (Coins only)</button>
-                            ${chore.bonus ? '' : `<button onclick="deleteChore('${chore.id}')" class="text-[10px] text-slate-500 hover:text-valored px-1">Delete</button>`}
+                        <div class="chore-parent-actions">
+                            <button onclick="failChore('${chore.id}')" class="mark-missed-button">Mark missed (Coins only)</button>
+                            ${chore.bonus ? '' : `<button onclick="deleteChore('${chore.id}')" class="delete-chore-button">Delete</button>`}
                         </div>
                     `;
                 }
 
                 card.innerHTML = `
-                    <div class="flex-1">
-                        <div class="flex items-center space-x-3">
-                            <span class="text-2xl bg-slate-900 p-2 rounded-xl border border-slate-800 block">${escapeHTML(chore.emoji)}</span>
+                    <div class="chore-content">
+                        <div class="card-identity">
+                            <span class="chore-avatar">${escapeHTML(chore.emoji)}</span>
                             <div>
-                                <h4 class="font-bold text-white text-xs leading-tight">${escapeHTML(chore.title)}</h4>
-                                <p class="text-[10px] text-slate-400">${chore.day} · ${chore.bonus ? `Reading bonus · week of ${escapeHTML(chore.period)}` : chore.daily || chore.archivedDaily ? (chore.mandatory ? 'Mandatory daily' : 'Optional daily') : chore.cadence === 'weekly' ? `Weekly · week of ${escapeHTML(chore.period)}` : chore.scheduled ? 'Scheduled session' : 'On-demand'}${needsReview(chore) ? ' · Parent review' : ''}</p>
-                                <div class="flex items-center space-x-2 mt-1">
-                                    <span class="text-[10px] font-extrabold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-1.5 py-0.5 rounded">+${chore.points} XP · +${chore.coins} Coins</span>
-                                    ${chore.penalty > 0 ? `<span class="text-[10px] font-bold text-valored bg-valored/10 border border-valored/30 px-1.5 py-0.5 rounded">Nominal ${chore.penalty} · max ${maxPenalty(chore)} Coins; actual ≤ day earnings/balance</span>` : ''}
+                                <h4 class="chore-title">${escapeHTML(chore.title)}</h4>
+                                <p class="item-meta">${chore.day} · ${chore.bonus ? `Reading bonus · week of ${escapeHTML(chore.period)}` : chore.daily || chore.archivedDaily ? (chore.mandatory ? 'Mandatory daily' : 'Optional daily') : chore.cadence === 'weekly' ? `Weekly · week of ${escapeHTML(chore.period)}` : chore.scheduled ? 'Scheduled session' : 'On-demand'}${needsReview(chore) ? ' · Parent review' : ''}</p>
+                                <div class="chore-awards">
+                                    <span class="earnings-badge">+${chore.points} XP · +${chore.coins} Coins</span>
+                                    ${chore.penalty > 0 ? `<span class="penalty-badge">Nominal ${chore.penalty} · max ${maxPenalty(chore)} Coins; actual ≤ day earnings/balance</span>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -480,7 +476,7 @@
                 container.appendChild(card);
             });
             if (appState.activeTab === 'active' && !filtered.some(c => c.status === 'pending')) {
-                container.insertAdjacentHTML('beforeend', '<p class="text-sm text-slate-300 pt-2">Parent review: nothing waiting.</p>');
+                container.insertAdjacentHTML('beforeend', '<p class="review-empty-text">Parent review: nothing waiting.</p>');
             }
         }
 
@@ -509,11 +505,11 @@
                     : blockedReading ? 'You already chose reading today.' : selectable ? 'Available for you to choose.' : 'Ask parent to assign this first. No Coins or XP until completed.';
                 const frequency = template.cadence === 'weekly' ? 'Once per Mon–Sun week; repeats weekly until a parent removes it.' : template.cadence === 'daily' ? 'Once a day; repeats daily until a parent removes it.' : selectable ? 'One choice per day; finish any previous choice first.' : template.scheduled ? 'Parent schedules each session.' : 'Parent assigns each job.';
                 const card = document.createElement('article');
-                card.className = 'bg-darkcard p-4 rounded-2xl border border-darkborder space-y-2';
-                card.innerHTML = `<h4 class="font-bold text-sm">${escapeHTML(template.emoji)} ${escapeHTML(template.title)}</h4><p class="text-sm text-emerald-300">${template.coins} Coins · ${template.points} lifetime XP</p><p class="text-xs text-slate-300">${escapeHTML(frequency)}</p><p class="text-sm text-slate-300">${escapeHTML(status)}</p>`;
+                card.className = 'catalog-choice';
+                card.innerHTML = `<h4 class="choice-title">${escapeHTML(template.emoji)} ${escapeHTML(template.title)}</h4><p class="success-text">${template.coins} Coins · ${template.points} lifetime XP</p><p class="detail-text">${escapeHTML(frequency)}</p><p class="help-text">${escapeHTML(status)}</p>`;
                 if (!existing && !blockedReading) {
                     const button = document.createElement('button');
-                    button.className = 'bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-sm font-bold';
+                    button.className = 'choose-chore-button';
                     button.textContent = selectable ? 'Choose this chore' : 'Ask parent to assign';
                     button.onclick = () => chooseCatalogChore(template.id);
                     card.appendChild(button);
@@ -569,27 +565,23 @@
                 const pending = appState.redemptions.some(r => r.kidId === currentKid?.id && r.rewardId === reward.id && r.status === 'pending');
                 const canAfford = currentKid && currentKid.coins >= reward.cost && !pending;
                 const card = document.createElement('div');
-                card.className = "bg-darkcard p-3.5 rounded-2xl border border-darkborder flex items-center justify-between gap-3 shadow-md";
+                card.className = 'reward-card';
 
-                let parentDelete = appState.isParentMode ? `<button onclick="deleteReward('${reward.id}')" class="text-slate-600 hover:text-valored p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : '';
+                let parentDelete = appState.isParentMode ? `<button onclick="deleteReward('${reward.id}')" class="delete-reward-button"><i data-lucide="trash-2" class="action-icon"></i></button>` : '';
 
                 card.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <span class="text-2xl bg-purple-950/40 p-2.5 rounded-xl border border-purple-500/30 block">${escapeHTML(reward.emoji)}</span>
+                    <div class="card-identity">
+                        <span class="reward-avatar">${escapeHTML(reward.emoji)}</span>
                         <div>
-                            <p class="text-[10px] text-neoncyan">Tier ${reward.tier} · ${['','Micro','Mid','Major'][reward.tier]}</p>
-                            <h4 class="font-bold text-white text-xs">${escapeHTML(reward.title)}</h4>
-                            <span class="text-[10px] font-extrabold text-neonyellow bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded mt-1 inline-block">${reward.cost} Coins</span>
+                            <p class="reward-tier">Tier ${reward.tier} · ${['','Micro','Mid','Major'][reward.tier]}</p>
+                            <h4 class="reward-title">${escapeHTML(reward.title)}</h4>
+                            <span class="reward-cost">${reward.cost} Coins</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div class="reward-actions">
                         ${parentDelete}
                         <button onclick="claimReward('${reward.id}')"
-                            class="px-3.5 py-2 rounded-xl text-xs font-bold font-heading tracking-wider shadow-md transition-all btn-bounce ${
-                                canAfford
-                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500 glow-cyan'
-                                : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                            }" ${!canAfford ? 'disabled' : ''}>
+                            class="request-reward-button" ${!canAfford ? 'disabled' : ''}>
                             ${pending ? 'PENDING' : 'REQUEST'}
                         </button>
                     </div>
@@ -610,14 +602,14 @@
             links.innerHTML = '';
             if (selectedKid) {
                 const button = document.createElement('button');
-                button.className = 'bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 text-xs font-bold text-white transition-all';
+                button.className = 'review-link';
                 const pending = appState.chores.filter(c => c.assignedTo === selectedKid.id && c.status === 'pending').length;
                 button.textContent = `Review ${selectedKid.name}’s chores (${pending})`;
                 button.onclick = () => { setTaskTab('pending'); switchMainView('chores'); };
                 links.appendChild(button);
             }
             const rewardsButton = document.createElement('button');
-            rewardsButton.className = 'bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 text-xs font-bold text-white transition-all';
+            rewardsButton.className = 'review-link';
             rewardsButton.textContent = 'All reward requests & vault';
             rewardsButton.onclick = () => switchMainView('shop');
             links.appendChild(rewardsButton);
@@ -634,33 +626,33 @@
                     const streak = getStreak(kid);
 
                     const card = document.createElement('div');
-                    card.className = "bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2";
+                    card.className = 'squad-card';
                     card.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg">${escapeHTML(kid.avatar)}</span>
+                        <div class="section-heading">
+                            <div class="player-identity">
+                                <span class="squad-avatar">${escapeHTML(kid.avatar)}</span>
                                 <div>
-                                    <span class="font-bold text-white text-xs font-heading">${escapeHTML(kid.name)}</span>
-                                    ${kid.archived ? '<span class="text-[10px] text-amber-400 ml-1">· Archived</span>' : ''}
+                                    <span class="squad-name">${escapeHTML(kid.name)}</span>
+                                    ${kid.archived ? '<span class="archived-label">· Archived</span>' : ''}
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <span class="text-xs font-mono text-amber-400 font-bold">${kid.coins} Coins</span>
-                                <span class="text-[10px] block text-slate-400">${kid.xp} XP · ${streak}d streak</span>
+                            <div class="player-balances">
+                                <span class="coin-amount">${kid.coins} Coins</span>
+                                <span class="player-history">${kid.xp} XP · ${streak}d streak</span>
                             </div>
                         </div>
-                        <div class="grid grid-cols-3 gap-2 text-center text-[11px] pt-1">
-                            <div class="bg-slate-800/60 p-1.5 rounded-lg border border-slate-700/50">
-                                <span class="text-slate-400 block text-[10px]">Active</span>
-                                <span class="font-bold text-white">${activeCount}</span>
+                        <div class="squad-stats">
+                            <div class="squad-stat">
+                                <span class="stat-label">Active</span>
+                                <span class="stat-value">${activeCount}</span>
                             </div>
-                            <div class="bg-slate-800/60 p-1.5 rounded-lg border border-slate-700/50">
-                                <span class="text-amber-400 block text-[10px]">In Review</span>
-                                <span class="font-bold text-amber-300">${pendingCount}</span>
+                            <div class="squad-stat is-pending">
+                                <span class="stat-label">In Review</span>
+                                <span class="stat-value">${pendingCount}</span>
                             </div>
-                            <div class="bg-slate-800/60 p-1.5 rounded-lg border border-slate-700/50">
-                                <span class="text-emerald-400 block text-[10px]">Done Today</span>
-                                <span class="font-bold text-emerald-300">${completedToday}</span>
+                            <div class="squad-stat is-completed">
+                                <span class="stat-label">Done Today</span>
+                                <span class="stat-value">${completedToday}</span>
                             </div>
                         </div>
                     `;
@@ -674,14 +666,14 @@
                 catChores.innerHTML = '';
                 catalog.chores.forEach(c => {
                     const el = document.createElement('div');
-                    el.className = "flex justify-between items-center bg-slate-900/60 px-3 py-2 rounded-xl text-xs border border-slate-800";
+                    el.className = 'catalog-row';
                     el.innerHTML = `
                         <div>
-                            <span class="font-bold text-white">${escapeHTML(c.emoji || '📋')} ${escapeHTML(c.title)}</span>
-                            <span class="text-[10px] text-slate-400 block">${c.ownership} · ${c.cadence} · ${c.mandatory ? 'Mandatory' : 'Optional'}</span>
+                            <span class="catalog-item-title">${escapeHTML(c.emoji || '📋')} ${escapeHTML(c.title)}</span>
+                            <span class="catalog-item-meta">${c.ownership} · ${c.cadence} · ${c.mandatory ? 'Mandatory' : 'Optional'}</span>
                         </div>
-                        <div class="text-right font-mono text-[11px]">
-                            <span class="text-emerald-400">+${c.points} XP</span> · <span class="text-amber-400">+${c.coins}C</span>
+                        <div class="catalog-awards">
+                            <span class="catalog-xp">+${c.points} XP</span> · <span class="catalog-coins">+${c.coins}C</span>
                         </div>
                     `;
                     catChores.appendChild(el);
@@ -693,13 +685,13 @@
                 catRewards.innerHTML = '';
                 appState.rewards.forEach(r => {
                     const el = document.createElement('div');
-                    el.className = "flex justify-between items-center bg-slate-900/60 px-3 py-2 rounded-xl text-xs border border-slate-800";
+                    el.className = 'catalog-row';
                     el.innerHTML = `
                         <div>
-                            <span class="font-bold text-white">${escapeHTML(r.emoji || '🎁')} ${escapeHTML(r.title)}</span>
-                            <span class="text-[10px] text-slate-400 block">Tier ${r.tier || 1}</span>
+                            <span class="catalog-item-title">${escapeHTML(r.emoji || '🎁')} ${escapeHTML(r.title)}</span>
+                            <span class="catalog-item-meta">Tier ${r.tier || 1}</span>
                         </div>
-                        <div class="font-mono text-xs font-bold text-amber-400">
+                        <div class="coin-amount">
                             ${r.cost} Coins
                         </div>
                     `;
@@ -709,21 +701,21 @@
 
             appState.kids.forEach(kid => {
                 const row = document.createElement('div');
-                row.className = "py-3 flex items-center justify-between gap-2";
+                row.className = 'managed-player';
                 row.innerHTML = `
-                    <div class="flex items-center space-x-2">
-                        <span class="text-xl">${escapeHTML(kid.avatar)}</span>
+                    <div class="player-identity">
+                        <span class="managed-player-avatar">${escapeHTML(kid.avatar)}</span>
                         <div>
-                            <span class="font-bold text-white text-xs font-heading block">${escapeHTML(kid.name)}</span>
-                            <span class="text-[10px] text-neoncyan font-mono font-bold">${kid.xp} permanent XP · ${kid.coins} Coins</span>
+                            <span class="managed-player-name">${escapeHTML(kid.name)}</span>
+                            <span class="managed-player-balance">${kid.xp} permanent XP · ${kid.coins} Coins</span>
                         </div>
                     </div>
-                    <div class="flex flex-wrap justify-end items-center gap-1">
-                        <button onclick="renameKid('${kid.id}')" class="text-slate-300 border border-slate-600 rounded-lg px-2 py-2 text-xs">Rename</button>
-                        ${kid.archived ? `<button onclick="restoreKid('${kid.id}')" class="text-neoncyan border border-cyan-700 rounded-lg px-2 py-2 text-xs">Restore</button><span class="text-xs text-slate-400">Archived · paused</span>` : `
-                        <button onclick="adjustKidCoins('${kid.id}', -5)" aria-label="Remove 5 Coins" class="bg-valored/20 text-valored border border-valored/40 px-2 py-1 rounded text-xs font-bold btn-bounce">-5</button>
-                        <button onclick="adjustKidCoins('${kid.id}', 5)" aria-label="Add 5 Coins" class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 px-2 py-1 rounded text-xs font-bold btn-bounce">+5</button>
-                        <button onclick="archiveKid('${kid.id}')" class="text-slate-300 border border-slate-600 rounded-lg px-2 py-2 text-xs">Archive…</button>`}
+                    <div class="player-actions">
+                        <button onclick="renameKid('${kid.id}')" class="manage-player-button">Rename</button>
+                        ${kid.archived ? `<button onclick="restoreKid('${kid.id}')" class="restore-player-button">Restore</button><span class="muted-text">Archived · paused</span>` : `
+                        <button onclick="adjustKidCoins('${kid.id}', -5)" aria-label="Remove 5 Coins" class="deduct-coins-button">-5</button>
+                        <button onclick="adjustKidCoins('${kid.id}', 5)" aria-label="Add 5 Coins" class="add-coins-button">+5</button>
+                        <button onclick="archiveKid('${kid.id}')" class="manage-player-button">Archive…</button>`}
                     </div>
                 `;
                 container.appendChild(row);
@@ -744,9 +736,9 @@
                 const btn = document.getElementById(`nav-${v}`);
                 if (btn) {
                     if (v === appState.activeView) {
-                        btn.className = "flex flex-col items-center text-valored font-bold transition-all btn-bounce";
+                        btn.className = 'nav-button is-active';
                     } else {
-                        btn.className = "flex flex-col items-center text-slate-500 font-bold hover:text-slate-300 transition-all btn-bounce";
+                        btn.className = 'nav-button';
                     }
                 }
             });
@@ -959,9 +951,9 @@
             ['active', 'pending', 'completed', 'missed'].forEach(t => {
                 const btn = document.getElementById(`tab-btn-${t}`);
                 if (t === tab) {
-                    btn.className = "flex-1 py-2 rounded-lg text-center transition-all bg-valored text-white font-heading tracking-wider shadow";
+                    btn.className = 'task-tab is-active';
                 } else {
-                    btn.className = "flex-1 py-2 rounded-lg text-center transition-all text-slate-400 hover:text-white font-heading tracking-wider";
+                    btn.className = 'task-tab';
                 }
             });
 
@@ -1083,14 +1075,14 @@
 
         function renderRedemptions() {
             const container = document.getElementById('redemptions-list');
-            container.innerHTML = '<h3 class="font-bold">Redemption requests</h3>';
+            container.innerHTML = '<h3 class="redemptions-title">Redemption requests</h3>';
             const requests = appState.redemptions.filter(r => appState.isParentMode || r.kidId === appState.activeKidId);
-            if (!requests.length) container.innerHTML += '<p class="text-xs text-slate-400">No requests yet.</p>';
+            if (!requests.length) container.innerHTML += '<p class="muted-text">No requests yet.</p>';
             requests.forEach(r => {
                 const kid = appState.kids.find(k => k.id === r.kidId);
                 const row = document.createElement('div');
-                row.className = 'bg-darkcard p-3 rounded-xl text-xs space-y-2 border border-darkborder';
-                row.innerHTML = `<p>${escapeHTML(kid.name)}${kid.archived ? ' (archived)' : ''} · ${escapeHTML(r.title)} · ${r.cost} Coins</p><p>${r.status === 'pending' ? 'Pending parent fulfillment · Coins reserved' : r.status === 'declined' ? 'Declined · Coins refunded' : 'Fulfilled'}</p>${appState.isParentMode && r.status === 'pending' ? `<button class="text-emerald-400 p-2" onclick="processRedemption('${r.id}', true)">Fulfill</button><button class="text-valored p-2" onclick="processRedemption('${r.id}', false)">Decline & refund</button>` : ''}`;
+                row.className = 'redemption-card';
+                row.innerHTML = `<p>${escapeHTML(kid.name)}${kid.archived ? ' (archived)' : ''} · ${escapeHTML(r.title)} · ${r.cost} Coins</p><p>${r.status === 'pending' ? 'Pending parent fulfillment · Coins reserved' : r.status === 'declined' ? 'Declined · Coins refunded' : 'Fulfilled'}</p>${appState.isParentMode && r.status === 'pending' ? `<button class="fulfill-button" onclick="processRedemption('${r.id}', true)">Fulfill</button><button class="decline-button" onclick="processRedemption('${r.id}', false)">Decline & refund</button>` : ''}`;
                 container.appendChild(row);
             });
         }
@@ -1387,11 +1379,11 @@
             emojiList.forEach((emoji, index) => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = `text-lg p-2 rounded-xl border ${index === 0 ? 'border-valored bg-valored/20' : 'border-slate-800 bg-slate-900'}`;
+                btn.className = `emoji-option ${index === 0 ? 'is-selected' : ''}`;
                 btn.textContent = emoji;
                 btn.onclick = () => {
-                    Array.from(container.children).forEach(c => c.className = 'text-lg p-2 rounded-xl border border-slate-800 bg-slate-900');
-                    btn.className = 'text-lg p-2 rounded-xl border border-valored bg-valored/20';
+                    Array.from(container.children).forEach(c => c.classList.remove('is-selected'));
+                    btn.classList.add('is-selected');
                     document.getElementById(targetInputId).value = emoji;
                 };
                 container.appendChild(btn);
@@ -1420,11 +1412,9 @@
             if (iconEl) iconEl.setAttribute('data-lucide', iconName);
             lucide.createIcons();
 
-            toast.classList.remove('-translate-y-20', 'opacity-0', 'pointer-events-none');
-            toast.classList.add('translate-y-0', 'opacity-100');
+            toast.classList.add('is-visible');
 
             setTimeout(() => {
-                toast.classList.remove('translate-y-0', 'opacity-100');
-                toast.classList.add('-translate-y-20', 'opacity-0', 'pointer-events-none');
+                toast.classList.remove('is-visible');
             }, 2500);
         }
