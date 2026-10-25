@@ -539,22 +539,107 @@
             const selectedKid = appState.kids.find(k => k.id === appState.activeKidId);
             document.getElementById('parent-scope').textContent = selectedKid
                 ? `Selected child: ${selectedKid.name}. Chore Review shows only this child; reward requests show all children. Switching child locks parent controls and returns to their chores.`
-                : 'No child selected. Add a player here or choose a profile to view their chores. Choosing a child locks parent controls; enter the PIN again to review.';
+                : 'Parent Admin mode active. Review all squad chores, player balances, and vault rewards below.';
             const links = document.getElementById('parent-review-links');
             links.innerHTML = '';
             if (selectedKid) {
                 const button = document.createElement('button');
-                button.className = 'bg-slate-800 rounded-xl px-4 py-3 text-sm';
+                button.className = 'bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 text-xs font-bold text-white transition-all';
                 const pending = appState.chores.filter(c => c.assignedTo === selectedKid.id && c.status === 'pending').length;
                 button.textContent = `Review ${selectedKid.name}’s chores (${pending})`;
                 button.onclick = () => { setTaskTab('pending'); switchMainView('chores'); };
                 links.appendChild(button);
             }
             const rewardsButton = document.createElement('button');
-            rewardsButton.className = 'bg-slate-800 rounded-xl px-4 py-3 text-sm';
-            rewardsButton.textContent = 'All reward requests';
+            rewardsButton.className = 'bg-slate-800 hover:bg-slate-700 rounded-xl px-4 py-2 text-xs font-bold text-white transition-all';
+            rewardsButton.textContent = 'All reward requests & vault';
             rewardsButton.onclick = () => switchMainView('shop');
             links.appendChild(rewardsButton);
+
+            // Render Squad Overview (Chores status per player)
+            const squadContainer = document.getElementById('parent-squad-overview');
+            if (squadContainer) {
+                squadContainer.innerHTML = '';
+                appState.kids.forEach(kid => {
+                    const kidChores = appState.chores.filter(c => c.assignedTo === kid.id);
+                    const activeCount = kidChores.filter(c => c.status === 'active').length;
+                    const pendingCount = kidChores.filter(c => c.status === 'pending').length;
+                    const completedToday = kidChores.filter(c => c.status === 'completed' && c.day === today()).length;
+                    const streak = getStreak(kid);
+
+                    const card = document.createElement('div');
+                    card.className = "bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2";
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-lg">${escapeHTML(kid.avatar)}</span>
+                                <div>
+                                    <span class="font-bold text-white text-xs font-heading">${escapeHTML(kid.name)}</span>
+                                    ${kid.archived ? '<span class="text-[10px] text-amber-400 ml-1">· Archived</span>' : ''}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-mono text-amber-400 font-bold">${kid.coins} Coins</span>
+                                <span class="text-[10px] block text-slate-400">${kid.xp} XP · ${streak}d streak</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-center text-[11px] pt-1">
+                            <div class="bg-slate-800/60 p-1.5 rounded-lg border border-slate-700/50">
+                                <span class="text-slate-400 block text-[10px]">Active</span>
+                                <span class="font-bold text-white">${activeCount}</span>
+                            </div>
+                            <div class="bg-slate-800/60 p-1.5 rounded-lg border border-slate-700/50">
+                                <span class="text-amber-400 block text-[10px]">In Review</span>
+                                <span class="font-bold text-amber-300">${pendingCount}</span>
+                            </div>
+                            <div class="bg-slate-800/60 p-1.5 rounded-lg border border-slate-700/50">
+                                <span class="text-emerald-400 block text-[10px]">Done Today</span>
+                                <span class="font-bold text-emerald-300">${completedToday}</span>
+                            </div>
+                        </div>
+                    `;
+                    squadContainer.appendChild(card);
+                });
+            }
+
+            // Render Master Catalog Chores & Rewards
+            const catChores = document.getElementById('parent-catalog-chores');
+            if (catChores) {
+                catChores.innerHTML = '';
+                catalog.chores.forEach(c => {
+                    const el = document.createElement('div');
+                    el.className = "flex justify-between items-center bg-slate-900/60 px-3 py-2 rounded-xl text-xs border border-slate-800";
+                    el.innerHTML = `
+                        <div>
+                            <span class="font-bold text-white">${escapeHTML(c.emoji || '📋')} ${escapeHTML(c.title)}</span>
+                            <span class="text-[10px] text-slate-400 block">${c.ownership} · ${c.cadence} · ${c.mandatory ? 'Mandatory' : 'Optional'}</span>
+                        </div>
+                        <div class="text-right font-mono text-[11px]">
+                            <span class="text-emerald-400">+${c.points} XP</span> · <span class="text-amber-400">+${c.coins}C</span>
+                        </div>
+                    `;
+                    catChores.appendChild(el);
+                });
+            }
+
+            const catRewards = document.getElementById('parent-catalog-rewards');
+            if (catRewards) {
+                catRewards.innerHTML = '';
+                appState.rewards.forEach(r => {
+                    const el = document.createElement('div');
+                    el.className = "flex justify-between items-center bg-slate-900/60 px-3 py-2 rounded-xl text-xs border border-slate-800";
+                    el.innerHTML = `
+                        <div>
+                            <span class="font-bold text-white">${escapeHTML(r.emoji || '🎁')} ${escapeHTML(r.title)}</span>
+                            <span class="text-[10px] text-slate-400 block">Tier ${r.tier || 1}</span>
+                        </div>
+                        <div class="font-mono text-xs font-bold text-amber-400">
+                            ${r.cost} Coins
+                        </div>
+                    `;
+                    catRewards.appendChild(el);
+                });
+            }
 
             appState.kids.forEach(kid => {
                 const row = document.createElement('div');
