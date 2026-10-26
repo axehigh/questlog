@@ -35,7 +35,7 @@
   are `node --check app.js` and `node --check tailwind.config.js`. The existing
   scripts reflect older rules and are not current acceptance coverage;
   `npm test` is a deliberately failing placeholder. Browser smoke checks, when
-  requested, should cover player switching, tabs, Parent PIN (1234), template
+  requested, should cover player switching, tabs, Parent PIN (default 1396), template
   deployment, scheduled training, daily/weekly rollover, reading exclusivity,
   late review, weekly bonus and redemption fulfillment/refund.
 
@@ -132,9 +132,11 @@
   player/reward requests are blocked. Only an unlocked parent fulfills or
   declines/refunds, once. Requests retain price/title after reward deletion or
   import. A minor chore pass is fulfilled manually by deleting the agreed task,
-  granting no XP. PIN 1234 is shared-device convenience, not authentication;
+  granting no XP. Default PIN 1396 is shared-device convenience, not authentication;
   dates, source and stored state can be manipulated; local PHP storage is not
-  authentication either.
+  authentication either. This default applies only to fresh/reset families;
+  existing saved PINs remain unchanged when updated code is deployed. Changing
+  an existing family's PIN requires a separate action, not a data reset.
 
 ## Prototype storage and reset
 
@@ -144,7 +146,7 @@
   mode. Existing safeguards may remain; they are not acceptance requirements.
 - Unlocked Parent Admin's **Reset prototype data** requires an irreversible
   all-data warning and typing `RESET`, then resets app state through the PHP API
-  and reloads current catalog defaults (Alex/Chris, PIN 1234). A backup is not
+  and reloads current catalog defaults (Alex/Chris, PIN 1396). A backup is not
   required. If removing legacy browser data, limit removal to
   `chore_quest_gamer_data` and `chore_quest_gamer_data_legacy_backup`; never use
   `localStorage.clear()` or delete unrelated data. Report storage/reset failures

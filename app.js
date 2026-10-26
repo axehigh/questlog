@@ -4,7 +4,7 @@
             activeKidId: null,
             activeTab: 'active', // active, pending, completed, missed
             activeView: 'chores', // chores, shop, parent
-            parentPin: '1234',
+            parentPin: '1396',
             kids: [],
             chores: [],
             rewards: [],
@@ -158,7 +158,7 @@
                 checkRows(defaultKids, 'starter players');
                 catalog.chores.forEach(c => requireValue(typeof c.title === 'string' && typeof c.emoji === 'string' && validAmount(c.points) && validAmount(c.coins) && validAmount(c.penalty) && ['daily','weekly','on-demand'].includes(c.cadence) && ['shared','personal'].includes(c.ownership) && typeof c.mandatory === 'boolean' && typeof c.requiresReview === 'boolean' && (!c.bonus || (c.bonus === 'reading' && Number.isInteger(c.requiredDays) && c.requiredDays >= 1 && c.requiredDays <= 7)), 'Invalid catalog template'));
                 catalog.chores.filter(c => c.seed && c.ownership === 'shared').forEach(c => requireValue(defaultKids.some(k => k.id === c.defaultOwner), 'Unknown shared seed owner'));
-                validateData({kids: defaultKids, chores: seedChores(), rewards: catalog.rewards, redemptions: [], parentPin: '1234'});
+                validateData({kids: defaultKids, chores: seedChores(), rewards: catalog.rewards, redemptions: [], parentPin: '1396'});
                 const saved = await readServerState();
                 loadFromStorage(saved.data);
                 serverETag = saved.etag;
@@ -189,7 +189,7 @@
                     .map(k => templateQuest(c, k.id)));
         }
         function loadFromStorage(saved) {
-            const parsed = saved === null ? JSON.parse(JSON.stringify({schemaVersion: 2, kids: defaultKids, chores: seedChores(), rewards: catalog.rewards, redemptions: [], parentPin: '1234'})) : saved;
+            const parsed = saved === null ? JSON.parse(JSON.stringify({schemaVersion: 2, kids: defaultKids, chores: seedChores(), rewards: catalog.rewards, redemptions: [], parentPin: '1396'})) : saved;
             requireValue(parsed && parsed.schemaVersion === 2, 'Unsupported saved data version');
             validateData(parsed);
             parsed.kids.forEach(k => {
@@ -202,8 +202,10 @@
 
         function responseETag(response) {
             const etag = response.headers.get('ETag');
-            requireValue(etag && /^"(?:none|[a-f0-9]{64})"$/.test(etag), 'Missing or invalid storage ETag');
-            return etag;
+            // Apache/Varnish may append -gzip inside quotes; PHP requires the canonical token.
+            const match = etag && /^"(none|[a-f0-9]{64})(?:-gzip)?"$/.exec(etag);
+            requireValue(match && match[0] === etag, 'Missing or invalid storage ETag');
+            return `"${match[1]}"`;
         }
 
         async function readServerState() {
@@ -1126,7 +1128,7 @@
                 switchMainView('parent');
                 openRequestedTemplate();
             } else {
-                showToast('Invalid PIN! Default is 1234', 'alert-circle');
+                showToast('Invalid PIN!', 'alert-circle');
             }
         }
 
@@ -1311,7 +1313,7 @@
 
         async function resetPrototypeData() {
             if (!appState.isParentMode || prototypeResetInProgress || storageFailed) return;
-            const answer = window.prompt('IRREVERSIBLE: reset the server family for ALL devices using this PHP service? This removes every active/archived profile, XP, Coins, chores, rewards/custom catalog copies, history, requests and saved PIN. Reload starts from data/catalog.json (Alex/Chris and current defaults, PIN 1234). Old browser data is ignored and left untouched. Type RESET to continue.');
+            const answer = window.prompt('IRREVERSIBLE: reset the server family for ALL devices using this PHP service? This removes every active/archived profile, XP, Coins, chores, rewards/custom catalog copies, history, requests and saved PIN. Reload starts from data/catalog.json (Alex/Chris and current defaults), restoring the default PIN. Old browser data is ignored and left untouched. Type RESET to continue.');
             if (answer !== 'RESET') return;
             prototypeResetInProgress = true;
             document.getElementById('app').inert = true;

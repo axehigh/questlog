@@ -1,0 +1,13 @@
+# Chore Quest routing template (not a live .htaccess file)
+# Install in /questlog/.htaccess, after any provider password-protection directives.
+Options -Indexes -MultiViews
+DirectoryIndex index.html
+RewriteEngine On
+
+# Paths are relative to /questlog/, not the domain root. No RewriteBase is needed.
+# Per-directory patterns have no leading slash. END stops further per-directory
+# processing of this internal rewrite; direct server/ requests hit the deny below.
+# No THE_REQUEST exception: absolute-form/encoded request targets cannot allow server/.
+RewriteRule ^api\.php$ server/api.php [END]
+RewriteRule ^(?:index\.html|app\.js|styles\.css|tailwind\.config\.js|data/catalog\.json)?$ - [END]
+RewriteRule ^ - [F,END]

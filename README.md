@@ -20,7 +20,8 @@ require internet access.
   full schema-2 family snapshot. The frontend never writes the source catalog.
 - `server/router.php` allows only the frontend assets, catalog and API routes;
   server code and saved state are not served as static files. Use this router,
-  not an unrestricted document-root server.
+  not an unrestricted document-root server. For Apache hosting use the deployment
+  routing below instead of the development router.
 
 All devices using the same PHP service share one family. Startup reads the server;
 an empty server is seeded from the catalog and saved before the app becomes ready.
@@ -37,16 +38,120 @@ not migrated or backed up by the client.
 are not requirements at this stage; reset/reseed deliberately when needed. Existing
 backend reset backups are implementation safeguards, not a client recovery workflow.
 
+## Deploy to one.com over SFTP
+
+**Do not publish this API without whole-site password protection.** The Parent
+PIN is only a UI convenience: anyone with API access can read or replace the
+family snapshot or reset it. All users sharing the hosting password can do this,
+including children; this is not secure parent/child authorization.
+
+One-time manual setup (hosting panel/File Manager or an SFTP client; no remote
+shell required):
+
+1. Confirm the plan provides **SFTP**, and obtain its host, username and remote
+   path. SFTP availability is separate from SSH shell access; FTP/FTPS is not
+   SFTP. Select web PHP **8.1+**, with `fsync` and directory syncing supported.
+   Apache **2.4+**, `mod_rewrite` and `.htaccess` overrides for `Options`,
+   `DirectoryIndex` and rewrite rules are required; confirm with the host.
+2. Create `questlog/` under the web document root, with `data/` and `server/`
+   inside. Use real directories/files, not symlinks. Allow PHP to create/write
+   `questlog/state/` (or create it privately with mode 700 for the PHP user).
+   Keep any existing state untouched; never use permissions 777.
+3. Enable HTTPS and provider password protection for **all of `/questlog/` and
+   its descendants**, including the API/assets, before uploading runtime files.
+   Manually append the contents of `deploy/htaccess.rules` to **`/questlog/.htaccess`**, after any
+   provider authentication directives; do not replace those directives or put
+   these rules in the domain-root `.htaccess`. The template provides routing,
+   not authentication. Do not upload the template into `server/` or as a runtime
+   file. Keep credentials outside the repository.
+4. Install local OpenSSH `sftp`. Verify the server host-key fingerprint through
+   a trusted provider channel and register it in your SSH `known_hosts` before
+   batch upload (for example, through a manual SFTP connection). The script
+   requires strict host-key verification: unknown/changed keys fail; never
+   disable these checks. Use an SSH config alias for a custom port/key.
+   Configure keys/agent authentication, or install local `sshpass` for the
+   environment-password mode below. No remote SSH shell, rsync or CLI PHP is needed.
+
+From the repository root, create your local deployment config:
+
+```sh
+cp .env.example .env
+```
+
+Edit `.env`: set `SFTP_OLONA` to `user@host` or a simple SSH config alias, and
+`SFTP_OLONA_DIR` to the **absolute SFTP-visible path** to the deployed `questlog`
+folder (not a URL; the SFTP root may be chrooted). Leave the third line exactly
+`SFTP_OLONA_PW=${SFTP_OLONA_PW}`: it is a non-secret reference to the exported
+system environment variable of the same name, not a place to enter a password.
+Then upload:
+
+```sh
+bash deploy/upload.sh
+```
+
+The destination comes only from the repository-root `.env`, not environment
+variables or positional arguments. The three keys above are required exactly
+once, with literal unquoted values and no spaces around `=`.
+Blank lines and full-line `#` comments are allowed; shell expansion, `export`,
+inline comments and additional keys are not supported. The password reference
+is validated literally; `.env` is **never sourced**. `.env` is gitignored and
+never uploaded. Keep actual passwords, tokens and private keys out of it.
+
+For password authentication, provide a nonempty **exported `SFTP_OLONA_PW`**
+through your system environment/secret manager before starting the script.
+Do not put the secret in command arguments, shell history or files in this repo.
+The script maps that value to `SSHPASS` for `sshpass -e` only; it never prints
+the value or writes it into a script or SFTP batch command. Stock `sftp -b`
+disables password prompting: password mode explicitly sets `BatchMode=no`
+**before** `-b`, allowing `sshpass` to answer the SSH password prompt via a PTY
+while retaining batch transfer error handling. This supports ordinary SSH
+password authentication, not MFA or arbitrary interactive challenges. Missing
+`sshpass` fails with installation/key-mode guidance, not an interactive fallback.
+An unset/empty `SFTP_OLONA_PW` uses ordinary batch key/agent authentication with
+no `sshpass` dependency or password prompt; unlock your agent beforehand.
+
+Environment secrets can be inspected by privileged processes and, depending on
+the OS, other processes running as your user. Use this only on a trusted local
+machine; keys/agent are preferable. Avoid environment dumps/debug logging, and
+unset `SFTP_OLONA_PW` after deployment. The script disables shell tracing to
+avoid logging its password assignment.
+
+`SFTP_OLONA_DIR` must end
+in `/questlog`, with only letters, digits, `_`, `-`, `.` and `/`, no spaces,
+trailing slash, repeated slashes or `.`/`..` components. Directories must already
+exist. The script uses only SFTP batch `cd`/`put`, uploading exactly `index.html`,
+`app.js`, `styles.css`, `tailwind.config.js`, `data/catalog.json` and
+`server/api.php`. It never uploads local state, edits remote `.htaccess`, deletes
+remote files or changes existing state. Failed uploads return a nonzero exit;
+uploads are not atomic, so pause use and rerun after fixing a partial failure.
+Reload clients afterwards; do not reset state to recover an upload failure.
+
+Access control is a **manual hosting responsibility**, not checked by the upload
+script. Before use, verify without hosting credentials that `/questlog/`,
+`/questlog/api.php`, `/questlog/app.js` and `/questlog/data/catalog.json` require
+HTTP 401 on every domain alias. After signing in, the chooser/assets/catalog
+should load and `/questlog/api.php` should return JSON. The per-directory rules
+rewrite that virtual API to `questlog/server/api.php` with `[END]`, while direct
+`/questlog/server/api.php`, `/questlog/state/state.json`,
+`/questlog/state/backups/`, `/questlog/.htaccess`, `/questlog/.git/config` and
+unknown paths must be denied (403/404), never served or listed. Confirm a UI
+change survives reload and later uploads. If any check fails, disable public
+access until hosting configuration is fixed. No deployment or smoke checks
+are performed by these instructions.
+
 ## Prototype catalog and economy
 
 ### Start here
 
 1. Each time the page loads, choose **Alex**, **Chris** or **Parent** (saved
-   families keep their actual names). Parent enters PIN **1234** by default and
+   families keep their actual names). Parent enters PIN **1396** by default and
    opens Admin without a child selected. Parent can add a player or restore an
    archived one, then exit Admin to the chooser. Saved names are authoritative;
    use Parent → Manage Players → **Rename** to change an old name without losing
    its balances/history. No player is silently renamed or selected.
+   The default PIN applies only to fresh or deliberately reset families. Deploying
+   updated code preserves an existing family's saved PIN; changing that PIN
+   requires a separate action, not a data reset.
 2. **My chores → Today** shows required work first, then optional chores already
    assigned to you, scheduled sessions and anything waiting for a parent check.
    Do the work, then tap **I did it**. Coins buy rewards; lifetime XP is a permanent
@@ -107,7 +212,7 @@ collections (including empty lists and deletions) win over these defaults.
   dishwasher/trash. Baseline earnings are 80/95 Coins/day, plus optional reading
   and extras. More players are supported; parents deploy required tasks, while
   children can explicitly choose small optional personal templates.
-- Unlock Parent PIN (`1234`), open Admin, select a **Source Catalog** template
+- Unlock Parent PIN (default `1396`), open Admin, select a **Source Catalog** template
   and **one target player**, then Deploy. This works for existing installations
   without resetting anything. Shared tasks pay only one player per job/period;
   duplicate deployments are blocked. To move an unsubmitted shared job, delete
@@ -168,7 +273,7 @@ else changes nothing. This resets **all** Chore Quest server-saved profiles
 requests and saved PIN for **all devices using this PHP service**, not just this
 browser. The client waits for queued writes, then sends `DELETE /api.php` with
 the latest `If-Match`. On confirmation the page reloads and seeds the current
-`data/catalog.json`: **Alex/Chris**, current tasks/reward defaults and PIN **1234**.
+`data/catalog.json`: **Alex/Chris**, current tasks/reward defaults and PIN **1396**.
 It does not change source JSON or remove old browser storage. Reset is deliberately
 irreversible in the UI; no backup/export step is required for disposable data.
 The backend currently keeps a private pre-reset copy under `state/backups/`.

@@ -242,14 +242,14 @@
 
                 <section class="reset-panel" aria-labelledby="reset-heading">
                     <h3 id="reset-heading" class="choice-title">Prototype data</h3>
-                    <p class="detail-text">data/catalog.json supplies first-run defaults; the PHP service saves one shared family for all devices using this server. Reset irreversibly removes ALL profiles (including archived), balances, custom tasks/rewards, history, requests and saved PIN for ALL those devices. Type RESET to confirm. Reload starts with Alex/Chris and current catalog defaults, PIN 1234. Old browser data is ignored and left untouched.</p>
+                    <p class="detail-text">data/catalog.json supplies first-run defaults; the PHP service saves one shared family for all devices using this server. Reset irreversibly removes ALL profiles (including archived), balances, custom tasks/rewards, history, requests and saved PIN for ALL those devices. Type RESET to confirm. Reload starts with Alex/Chris and current catalog defaults, restoring the default PIN. Old browser data is ignored and left untouched.</p>
                     <button onclick="resetPrototypeData()" class="reset-button">Reset prototype data</button>
                     <p class="muted-text">Irreversible. You must type RESET in the confirmation to proceed.</p>
                 </section>
 
                 <div class="pin-notice">
                     <i data-lucide="lock" class="pin-notice-icon"></i>
-                    <span>Default Parent Passcode is <strong class="pin-notice-code">1234</strong>. Tap "Exit Admin" to lock.</span>
+                    <span>Tap "Exit Admin" to lock parent controls.</span>
                 </div>
             </section>
 
@@ -403,7 +403,7 @@
             </div>
             <div>
                 <h3 class="pin-title">Parent Passcode</h3>
-                <p class="pin-help">Enter PIN (Default: <span class="pin-default-code">1234</span>)</p>
+                <p class="pin-help">Enter your Parent PIN</p>
             </div>
             <input type="password" id="pin-input" aria-label="Parent PIN" inputmode="numeric" maxlength="4" placeholder="••••" onkeydown="if (event.key === 'Enter') verifyPin()" class="pin-input">
             <div class="pin-actions">
