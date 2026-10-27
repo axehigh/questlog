@@ -10,6 +10,13 @@ saved families keep their names and PIN. **Parent** opens Admin without a child
 selected. PIN **1396 applies only to fresh/reset families**; code updates do not
 change a saved PIN. Change an existing PIN separately, not by resetting data.
 
+Player entry and every switch, including the current child, require that player's
+PIN. Wrong/canceled PIN entry does not switch players. Player PINs are configured
+privately by stable profile ID on the server, not in family data or the Add Player
+form; see [server PIN configuration](../../README.md#server-pin-configuration).
+New players need a configured PIN before entry. Explicit local development mode
+skips both parent and player PIN prompts; these PINs are UI safeguards, not authentication.
+
 In Admin, use **Manage Players** to add, rename, archive or restore players.
 Rename keeps balances/history. Added players need deliberate task assignments.
 Switching children (even tapping the current child) locks Admin, closes dialogs

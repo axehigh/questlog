@@ -27,7 +27,8 @@ Use the supplied PHP router. PHP needs write access to `state/`.
 ## Using the app
 
 - Choose a player on every fresh load, or choose **Parent** to open Admin.
-  The default PIN is **1396 only for fresh/reset families**; deploying updates
+  Enter that player's PIN on entry and every switch (even the current player).
+  The default Parent PIN is **1396 only for fresh/reset families**; deploying updates
   does not change an existing family's saved PIN.
 - In **My chores → Today**, do the work and tap **I did it**. Small optional
   personal tasks are available through **Choose an extra chore**; other work
@@ -39,12 +40,35 @@ Use the supplied PHP router. PHP needs write access to `state/`.
 See the [app and storage guide](resources/docs/user-guide.md) for recurring
 chores, reading bonuses, penalties, archive/restore and reward rules.
 
+## Server PIN configuration
+
+Copy `.env.example` to ignored `.env` only if you do not already have one; otherwise
+add the runtime keys without replacing existing deployment settings. PHP reads
+literal, unquoted `KEY=value` lines (no shell expansion); process environment
+variables override `.env`, including empty values. Keep each runtime key unique.
+
+- `APP_ENV=production` (also the safe behavior when absent): prompt for both PINs.
+  **Only exact `APP_ENV=development` skips both parent and player prompts**, including
+  Parent entry from the chooser and Ask parent handoffs. Use only for local development.
+  Reload open pages after changing settings.
+- `PLAYER_PINS={}`: privately fill this JSON object with stable player IDs as keys
+  and four-digit PIN **strings** as values. First-run IDs are `k1` (Alex) and `k2`
+  (Chris). For a new/renamed player, tap their profile: the PIN dialog displays
+  their stable ID. A parent/server operator adds that ID and its chosen PIN to
+  the private server configuration. There is no default player PIN, and an
+  unconfigured player cannot enter outside development mode. Never put real PINs
+  in examples, source, family snapshots or uploaded client assets.
+
+Only the development bypass boolean is sent to the browser; player PIN checks
+run on the server. Configuration/request failures do not unlock profiles.
+This does not change saved Parent PINs, profiles, balances or history.
+
 ## Shared storage, safety and reset
 
 - All devices using the same PHP service share one family. There is no offline
   saving or browser-only fallback. Conflicting writes, failed requests or invalid
   data block use and ask for a reload; an error does not prove a write failed.
-- The Parent PIN is a shared-device convenience, **not authentication**. The API
+- Parent and player PINs are casual shared-device UI safeguards, **not authentication**. The storage API
   does not enforce it. Public hosting requires HTTPS and whole-site password
   protection, including API/assets; anyone with that access can read, replace or
   reset the family. It is not secure parent/child authorization.

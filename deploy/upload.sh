@@ -26,7 +26,8 @@ while IFS= read -r line || [[ -n $line ]]; do
       [[ $line == 'SFTP_OLONA_PW=${SFTP_OLONA_PW}' ]] || die 'SFTP_OLONA_PW in .env must be the literal reference ${SFTP_OLONA_PW}, never a password.'
       password_reference=1
       ;;
-    *) die 'Invalid .env line; only SFTP_OLONA, SFTP_OLONA_DIR and the SFTP_OLONA_PW reference are allowed.' ;;
+    APP_ENV=*|PLAYER_PINS=*) ;; # Server-only settings; never uploaded or evaluated here.
+    *) die 'Invalid .env line; only documented SFTP and server runtime settings are allowed.' ;;
   esac
 done < .env
 [[ ${host+x} && ${remote_dir+x} && ${password_reference+x} ]] || die '.env must define SFTP_OLONA, SFTP_OLONA_DIR and SFTP_OLONA_PW=${SFTP_OLONA_PW}.'

@@ -5,8 +5,8 @@ This runbook covers Apache hosting under `/questlog/`, without a remote shell.
 
 ## Protect the site before uploading
 
-**Do not publish this API without whole-site password protection.** The Parent
-PIN is only a UI convenience: anyone with API access can read, replace or reset
+**Do not publish this API without whole-site password protection.** Parent and player
+PINs are only UI conveniences: anyone with API access can read, replace or reset
 the family snapshot. All users sharing the hosting password can do this,
 including children; this is not secure parent/child authorization.
 
@@ -53,13 +53,21 @@ Edit the local `.env`:
 - Leave `SFTP_OLONA_PW=${SFTP_OLONA_PW}` exactly as written: a non-secret reference
   to the exported environment variable, **not a place to enter a password**.
 
-These three keys are required exactly once, with literal unquoted values and
+These three SFTP keys are required exactly once, with literal unquoted values and
 no spaces around `=`. Blank lines and full-line `#` comments are allowed;
-shell expansion, `export`, inline comments and additional keys are not supported.
+shell expansion, `export` and inline comments are not supported. The documented
+`APP_ENV` and `PLAYER_PINS` runtime keys are also allowed but ignored by the uploader.
 The destination comes only from this repository-root file, not environment
 variables or positional arguments. The script validates the password reference
 literally and never sources `.env`; the file is gitignored and never uploaded.
-Keep actual passwords, tokens and private keys out of it and the repository.
+Keep actual SFTP passwords, tokens and private keys out of it and the repository.
+
+Configure the hosted PHP process environment, or manually create a private
+`questlog/.env` using the host's file manager, with `APP_ENV=production` and the
+private `PLAYER_PINS` mapping described in [server PIN configuration](../../README.md#server-pin-configuration).
+Never copy the local development `.env` to hosting: it may disable both PIN gates.
+The uploader does not upload `.env`; hosting rules must deny direct access to it.
+Do not use a state reset to configure player PINs or change the saved Parent PIN.
 
 An unset/empty exported `SFTP_OLONA_PW` uses batch key/agent authentication with
 no password prompt or `sshpass` dependency; unlock your agent beforehand.
@@ -97,8 +105,10 @@ On every domain alias:
 - Without hosting credentials, `/questlog/`, `/questlog/api.php`,
   `/questlog/app.js` and `/questlog/data/catalog.json` must require HTTP **401**.
 - After signing in, the chooser/assets/catalog should load and `/questlog/api.php`
-  should return JSON. The per-directory rules rewrite this virtual API to
-  `questlog/server/api.php` using `[END]`.
+   should return JSON. The per-directory rules rewrite this virtual API to
+   `questlog/server/api.php` using `[END]`.
+- `/questlog/api.php?action=pin` should return only `{"skipPin":false}` on hosting;
+  the same route accepts player PIN verification without exposing the PIN mapping.
 - Direct `/questlog/server/api.php`, `/questlog/state/state.json`,
   `/questlog/state/backups/`, `/questlog/.htaccess`, `/questlog/.git/config` and
   unknown paths must be denied (**403/404**), never served or listed.

@@ -395,15 +395,15 @@
         </div>
     </div>
 
-    <!-- Modal: Parent Security Lock Entry -->
+    <!-- Modal: Parent or player PIN entry -->
     <div id="modal-pin" class="modal pin-modal hidden">
         <div class="modal-panel pin-panel">
             <div class="pin-emblem">
                 <i data-lucide="shield-check" class="brand-symbol"></i>
             </div>
             <div>
-                <h3 class="pin-title">Parent Passcode</h3>
-                <p class="pin-help">Enter your Parent PIN</p>
+                <h3 id="pin-title" class="pin-title">Parent Passcode</h3>
+                <p id="pin-help" class="pin-help">Enter your Parent PIN</p>
             </div>
             <input type="password" id="pin-input" aria-label="Parent PIN" inputmode="numeric" maxlength="4" placeholder="••••" onkeydown="if (event.key === 'Enter') verifyPin()" class="pin-input">
             <div class="pin-actions">

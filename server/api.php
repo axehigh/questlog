@@ -12,6 +12,56 @@ function reply(int $status, array $body): void
     exit;
 }
 
+// PINs are a shared-device UI safeguard, not API authorization.
+if (($_GET['action'] ?? '') === 'pin') {
+    $settings = [];
+    $envPath = dirname(__DIR__) . '/.env';
+    if (file_exists($envPath)) {
+        $lines = @file($envPath, FILE_IGNORE_NEW_LINES);
+        if ($lines === false) reply(500, ['error' => 'Unable to read server PIN configuration. Ask a parent to check .env.']);
+        foreach ($lines as $line) {
+            if (!preg_match('/^(APP_ENV|PLAYER_PINS)=(.*)$/D', rtrim($line, "\r"), $match)) continue;
+            if (array_key_exists($match[1], $settings)) reply(500, ['error' => 'Duplicate server PIN setting. Ask a parent to check .env.']);
+            $settings[$match[1]] = $match[2];
+        }
+    }
+    // Process environment wins, including explicitly empty values. No shell expansion.
+    foreach (['APP_ENV', 'PLAYER_PINS'] as $key) {
+        $value = getenv($key);
+        if ($value !== false) $settings[$key] = $value;
+    }
+    $skipPin = ($settings['APP_ENV'] ?? '') === 'development';
+    $method = $_SERVER['REQUEST_METHOD'];
+    if ($method === 'GET') reply(200, ['skipPin' => $skipPin]);
+    if ($method !== 'POST') {
+        header('Allow: GET, POST');
+        reply(405, ['error' => 'Method not allowed']);
+    }
+    if (strtolower(trim(explode(';', $_SERVER['CONTENT_TYPE'] ?? '')[0])) !== 'application/json') {
+        reply(415, ['error' => 'Content-Type must be application/json']);
+    }
+    $input = @file_get_contents('php://input', false, null, 0, 1025);
+    if ($input === false || strlen($input) > 1024) reply(400, ['error' => 'Invalid PIN request']);
+    $request = json_decode($input);
+    if (!is_object($request) || !is_string($request->playerId ?? null)
+        || !preg_match('/^[a-zA-Z0-9_-]+$/D', $request->playerId)
+        || !is_string($request->pin ?? null) || !preg_match('/^[0-9]{4}$/D', $request->pin)) {
+        reply(400, ['error' => 'Enter a four-digit player PIN.']);
+    }
+    if ($skipPin) reply(200, ['verified' => true]);
+    $pins = json_decode($settings['PLAYER_PINS'] ?? '{}');
+    if (!is_object($pins)) reply(500, ['error' => 'Invalid PLAYER_PINS configuration. Ask a parent to check the server .env.']);
+    foreach ($pins as $id => $pin) {
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/D', (string) $id) || !is_string($pin) || !preg_match('/^[0-9]{4}$/D', $pin)) {
+            reply(500, ['error' => 'Invalid PLAYER_PINS configuration. Use stable player IDs and four-digit strings in the server .env.']);
+        }
+    }
+    if (!property_exists($pins, $request->playerId)) {
+        reply(409, ['error' => 'No PIN configured for this player. Ask a parent to add this player’s stable ID to PLAYER_PINS in the server .env.']);
+    }
+    reply(200, ['verified' => hash_equals($pins->{$request->playerId}, $request->pin)]);
+}
+
 function syncDirectory(string $directory): void
 {
     $handle = @fopen($directory, 'r');

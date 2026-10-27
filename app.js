@@ -25,6 +25,8 @@
         let localRevision = 0;
         let storageFailed = false;
         let refreshInProgress = false;
+        let skipPin = false;
+        let pinContext = null;
         const activeKids = () => appState.kids.filter(k => !k.archived);
         const activePlayer = id => appState.kids.find(k => k.id === id && !k.archived);
         const validAmount = n => Number.isSafeInteger(n) && n >= 0 && n <= 1000000000;
@@ -149,6 +151,11 @@
         window.onload = async function() {
             try {
                 document.getElementById('app').inert = true;
+                const pinResponse = await fetch('api.php?action=pin', {cache: 'no-store'});
+                requireValue(pinResponse.ok, `PIN configuration HTTP ${pinResponse.status}`);
+                const pinConfig = await pinResponse.json();
+                requireValue(typeof pinConfig.skipPin === 'boolean', 'Invalid server PIN configuration');
+                skipPin = pinConfig.skipPin;
                 const response = await fetch('data/catalog.json', {cache: 'no-store'});
                 requireValue(response.ok, `Catalog HTTP ${response.status}`);
                 catalog = await response.json();
@@ -939,6 +946,13 @@
 
         function selectKid(id) {
             if (!activePlayer(id)) return;
+            requestedTemplateId = null;
+            if (!skipPin) return promptPin(id);
+            activateKid(id);
+        }
+
+        function activateKid(id) {
+            if (storageFailed || !activePlayer(id)) return;
             appState.isParentMode = false;
             requestedTemplateId = null;
             ['modal-chore','modal-kid','modal-reward','modal-pin'].forEach(closeModal);
@@ -1111,24 +1125,61 @@
                 showToast('Switched to Player Mode', 'user');
                 renderApp();
             } else {
-                document.getElementById('pin-input').value = '';
-                openModal('modal-pin');
+                if (skipPin) unlockParent();
+                else promptPin();
             }
         }
 
-        function verifyPin() {
+        function promptPin(playerId = null) {
+            // A new context invalidates replies for a canceled or replaced prompt.
+            pinContext = {playerId, busy: false};
+            const kid = playerId ? activePlayer(playerId) : null;
+            document.getElementById('pin-title').textContent = kid ? `${kid.name}’s Passcode` : 'Parent Passcode';
+            document.getElementById('pin-help').textContent = kid ? `Enter your player PIN · Profile ID: ${kid.id}` : 'Enter your Parent PIN';
+            const input = document.getElementById('pin-input');
+            input.value = '';
+            input.setAttribute('aria-label', kid ? `${kid.name}’s player PIN` : 'Parent PIN');
+            openModal('modal-pin');
+        }
+
+        function unlockParent() {
+            if (storageFailed) return;
+            appState.isParentMode = true;
+            closeModal('modal-pin');
+            document.getElementById('mode-btn-text').textContent = 'Exit Admin';
+            document.getElementById('mode-subtitle').textContent = 'Parent Admin Mode';
+            showToast('Parent Controls Unlocked', 'shield-check');
+            renderApp();
+            switchMainView('parent');
+            openRequestedTemplate();
+        }
+
+        async function verifyPin() {
+            const context = pinContext;
+            if (!context || context.busy || storageFailed) return;
             const entered = document.getElementById('pin-input').value;
-            if (entered === appState.parentPin) {
-                appState.isParentMode = true;
-                closeModal('modal-pin');
-                document.getElementById('mode-btn-text').textContent = 'Exit Admin';
-                document.getElementById('mode-subtitle').textContent = 'Parent Admin Mode';
-                showToast('Parent Controls Unlocked', 'shield-check');
-                renderApp();
-                switchMainView('parent');
-                openRequestedTemplate();
-            } else {
-                showToast('Invalid PIN!', 'alert-circle');
+            if (!context.playerId) {
+                if (entered === appState.parentPin) unlockParent();
+                else showToast('Invalid PIN!', 'alert-circle');
+                return;
+            }
+            context.busy = true;
+            try {
+                const response = await fetch('api.php?action=pin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({playerId: context.playerId, pin: entered})
+                });
+                const result = await response.json();
+                if (pinContext !== context || storageFailed) return;
+                requireValue(response.ok, result.error || `Player PIN verification HTTP ${response.status}`);
+                requireValue(typeof result.verified === 'boolean', 'Invalid player PIN response');
+                if (result.verified) activateKid(context.playerId);
+                else showToast('Invalid PIN!', 'alert-circle');
+            } catch (error) {
+                if (pinContext === context && !storageFailed) showToast(`Unable to enter player: ${error.message}`, 'alert-circle');
+            } finally {
+                context.busy = false;
             }
         }
 
@@ -1149,7 +1200,11 @@
             const modal = document.getElementById(id);
             const wasOpen = !modal.classList.contains('hidden');
             modal.classList.add('hidden');
-            if (id === 'modal-pin' && !appState.isParentMode) requestedTemplateId = null;
+            if (id === 'modal-pin') {
+                pinContext = null;
+                document.getElementById('pin-input').value = '';
+                if (!appState.isParentMode) requestedTemplateId = null;
+            }
             if (wasOpen && modalReturnFocus?.isConnected) modalReturnFocus.focus();
         }
 
