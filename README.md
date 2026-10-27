@@ -27,14 +27,15 @@ Use the supplied PHP router. PHP needs write access to `state/`.
 ## Using the app
 
 - Choose a player on every fresh load, or choose **Parent** to open Admin.
-  Enter that player's PIN on entry and every switch (even the current player).
+  Enter that player's PIN on entry. To enter another player, first **Log out**
+  to the profile chooser; there is no in-session player switching.
   The default Parent PIN is **1396 only for fresh/reset families**; deploying updates
   does not change an existing family's saved PIN.
 - In **My chores → Today**, do the work and tap **I did it**. Small optional
   personal tasks are available through **Choose an extra chore**; other work
   needs a parent assignment. Coins buy rewards; XP is never spent.
 - Parents manage players, deploy catalog templates, review work and fulfill or
-  decline/refund reward requests. Switching children locks parent controls.
+  decline/refund reward requests. Logging out also locks parent controls.
   Requests are in-app only: no email, WhatsApp or push notifications are sent.
 
 See the [app and storage guide](resources/docs/user-guide.md) for recurring
@@ -49,7 +50,8 @@ variables override `.env`, including empty values. Keep each runtime key unique.
 
 - `APP_ENV=production` (also the safe behavior when absent): prompt for both PINs.
   **Only exact `APP_ENV=development` skips both parent and player prompts**, including
-  Parent entry from the chooser and Ask parent handoffs. Use only for local development.
+  Parent entry from the chooser and Ask parent handoffs. Logout is still required
+  before choosing another player. Use only for local development.
   Reload open pages after changing settings.
 - `PLAYER_PINS={}`: privately fill this JSON object with stable player IDs as keys
   and four-digit PIN **strings** as values. First-run IDs are `k1` (Alex) and `k2`

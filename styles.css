@@ -124,8 +124,7 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .parent-toggle > :not([hidden]) ~ :not([hidden]) { margin-left: .375rem; }
 .parent-toggle:hover { background: #334155; }
 .parent-toggle-icon, .panel-icon, .player-modal-icon, .toast-icon { color: var(--quest-cyan); }
-.player-tabs { display: flex; overflow-x: auto; padding-block: .25rem; }
-.player-tabs > :not([hidden]) ~ :not([hidden]) { margin-left: .625rem; }
+.player-tabs { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .625rem; padding-block: .25rem; }
 .player-tab {
     display: flex; align-items: center; flex-shrink: 0; padding: .375rem .75rem; border-radius: .75rem;
     font-size: .75rem; line-height: 1rem; font-weight: 700; white-space: nowrap;

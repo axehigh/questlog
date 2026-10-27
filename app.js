@@ -320,7 +320,7 @@
             const kid = appState.kids.find(k => k.id === appState.activeKidId);
             const entry = !kid && !appState.isParentMode;
             document.getElementById('view-entry').classList.toggle('hidden', !entry);
-            document.getElementById('kid-selector-bar').classList.toggle('hidden', !kid && !appState.isParentMode);
+            document.getElementById('kid-selector-bar').classList.toggle('hidden', !kid);
             document.getElementById('entry-help').textContent = activeKids().length
                 ? 'Choose your name to see what you need to do today, choose extra chores and spend your Coins.'
                 : 'No active players. Choose Parent to add a player or restore an archived player. Your saved data has not been reset.';
@@ -333,28 +333,31 @@
                 button.onclick = () => selectKid(k.id);
                 container.appendChild(button);
             });
+            document.getElementById('mode-toggle-btn').classList.toggle('hidden', !!kid && !appState.isParentMode);
             document.getElementById('mode-btn-text').textContent = appState.isParentMode ? 'Exit Admin' : 'Parent PIN';
-            document.getElementById('mode-subtitle').textContent = appState.isParentMode ? 'Parent controls unlocked · switching child locks them' : kid ? `${kid.name}’s chores & rewards` : 'Choose your profile to start';
+            document.getElementById('mode-subtitle').textContent = appState.isParentMode ? 'Parent controls unlocked' : kid ? `${kid.name}’s chores & rewards` : 'Choose your profile to start';
         }
 
-        // Render Player Selector Bar
+        // Show only the entered player; another player must enter from the chooser.
         function renderKidSelector() {
             const container = document.getElementById('kid-selector-bar');
             container.innerHTML = '';
-
-            activeKids().forEach(kid => {
-                const isActive = kid.id === appState.activeKidId;
-                const btn = document.createElement('button');
-                btn.onclick = () => selectKid(kid.id);
-                btn.setAttribute('aria-pressed', String(isActive));
-                btn.className = `player-tab ${isActive ? 'is-selected' : ''}`;
-                btn.innerHTML = `
-                    <span class="player-tab-avatar">${escapeHTML(kid.avatar)}</span>
-                    <span class="player-tab-name">${escapeHTML(kid.name)}</span>
-                    <span class="player-tab-xp">${kid.xp}XP</span>
-                `;
-                container.appendChild(btn);
-            });
+            const kid = activePlayer(appState.activeKidId);
+            if (!kid) return;
+            const identity = document.createElement('div');
+            identity.className = 'player-identity';
+            identity.innerHTML = `
+                <span class="player-tab-avatar" aria-hidden="true">${escapeHTML(kid.avatar)}</span>
+                <span class="player-tab-name">${escapeHTML(kid.name)}</span>
+                <span class="player-tab-xp">${kid.xp}XP</span>
+            `;
+            container.appendChild(identity);
+            const button = document.createElement('button');
+            button.className = 'parent-toggle';
+            button.textContent = 'Log out';
+            button.setAttribute('aria-label', `Log out ${kid.name} and return to profile chooser`);
+            button.onclick = logoutPlayer;
+            container.appendChild(button);
         }
 
         // Render Active Gamer Hero Card
@@ -605,7 +608,7 @@
             container.innerHTML = '';
             const selectedKid = appState.kids.find(k => k.id === appState.activeKidId);
             document.getElementById('parent-scope').textContent = selectedKid
-                ? `Selected child: ${selectedKid.name}. Chore Review shows only this child; reward requests show all children. Switching child locks parent controls and returns to their chores.`
+                ? `Selected child: ${selectedKid.name}. Chore Review shows only this child; reward requests show all children. Log out to return to the profile chooser and lock parent controls.`
                 : 'Parent Admin mode active. Review all squad chores, player balances, and vault rewards below.';
             const links = document.getElementById('parent-review-links');
             links.innerHTML = '';
@@ -945,14 +948,14 @@
         }
 
         function selectKid(id) {
-            if (!activePlayer(id)) return;
+            if (storageFailed || appState.activeKidId || appState.isParentMode || !activePlayer(id)) return;
             requestedTemplateId = null;
             if (!skipPin) return promptPin(id);
             activateKid(id);
         }
 
         function activateKid(id) {
-            if (storageFailed || !activePlayer(id)) return;
+            if (storageFailed || appState.activeKidId || appState.isParentMode || !activePlayer(id)) return;
             appState.isParentMode = false;
             requestedTemplateId = null;
             ['modal-chore','modal-kid','modal-reward','modal-pin'].forEach(closeModal);
@@ -962,6 +965,19 @@
             document.getElementById('template-player').value = '';
             renderApp();
             document.getElementById('hero-name').focus();
+        }
+
+        function logoutPlayer() {
+            if (storageFailed || prototypeResetInProgress) return;
+            appState.activeKidId = null;
+            appState.isParentMode = false;
+            requestedTemplateId = null;
+            ['modal-chore','modal-kid','modal-reward','modal-pin'].forEach(closeModal);
+            appState.activeView = 'chores';
+            setTaskTab('active');
+            document.getElementById('template-player').value = '';
+            renderApp();
+            document.getElementById('entry-heading').focus();
         }
 
         function setTaskTab(tab) {
@@ -1109,7 +1125,7 @@
         // --- PARENT AUTHENTICATION ---
 
         function enterParent() {
-            appState.activeKidId = null;
+            if (appState.activeKidId || appState.isParentMode) return;
             requestedTemplateId = null;
             toggleParentMode();
         }
@@ -1131,6 +1147,7 @@
         }
 
         function promptPin(playerId = null) {
+            if (storageFailed || (playerId !== null && (appState.activeKidId || appState.isParentMode || !activePlayer(playerId)))) return;
             // A new context invalidates replies for a canceled or replaced prompt.
             pinContext = {playerId, busy: false};
             const kid = playerId ? activePlayer(playerId) : null;

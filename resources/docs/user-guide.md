@@ -10,19 +10,23 @@ saved families keep their names and PIN. **Parent** opens Admin without a child
 selected. PIN **1396 applies only to fresh/reset families**; code updates do not
 change a saved PIN. Change an existing PIN separately, not by resetting data.
 
-Player entry and every switch, including the current child, require that player's
-PIN. Wrong/canceled PIN entry does not switch players. Player PINs are configured
+Player entry requires that player's PIN. Once entered, only the current player
+and **Log out** are shown, not other player choices. Log out returns to the initial
+chooser before anyone can enter again, even as the same player. Wrong/canceled
+PIN entry leaves the chooser unchanged. Player PINs are configured
 privately by stable profile ID on the server, not in family data or the Add Player
 form; see [server PIN configuration](../../README.md#server-pin-configuration).
 New players need a configured PIN before entry. Explicit local development mode
-skips both parent and player PIN prompts; these PINs are UI safeguards, not authentication.
+skips both parent and player PIN prompts, but still requires logout before choosing
+another player; these PINs are UI safeguards, not authentication.
 
 In Admin, use **Manage Players** to add, rename, archive or restore players.
 Rename keeps balances/history. Added players need deliberate task assignments.
-Switching children (even tapping the current child) locks Admin, closes dialogs
-and returns to Today. **Exit Admin** locks controls and returns to the selected
-child, or the chooser if none is selected. Review is scoped to the selected
-child; reward requests show all children.
+**Log out**, also available in Admin when entered from a child, locks Admin,
+closes dialogs and cancels pending PIN entry or chore handoffs without changing
+saved player data. The next entry starts at Today. **Exit Admin** locks controls
+and returns to the selected child, or the chooser if none is selected. Review is
+scoped to the selected child; reward requests show all children.
 
 **Archive…** asks for confirmation naming the player; it does not delete data.
 Archived players disappear from child choosers/assignment targets. Their chores

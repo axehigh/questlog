@@ -35,7 +35,7 @@
   are `node --check app.js` and `node --check tailwind.config.js`. The existing
   scripts reflect older rules and are not current acceptance coverage;
   `npm test` is a deliberately failing placeholder. Browser smoke checks, when
-  requested, should cover player switching, tabs, Parent PIN (default 1396), template
+  requested, should cover player entry/logout, tabs, Parent PIN (default 1396), template
   deployment, scheduled training, daily/weekly rollover, reading exclusivity,
   late review, weekly bonus and redemption fulfillment/refund.
 
@@ -48,11 +48,13 @@
 - Alex/Chris are first-run players only. More players can be added with zero XP;
   no default tasks are automatically added to an existing or new extra profile.
 - Every fresh load starts at explicit profile choice (no saved/default selection).
-  Empty families show parent setup, not a placeholder child. Child switching,
-  including tapping the current child, locks parent controls, closes dialogs and
-  returns to Today. Adding/archiving/restoring a profile never silently selects
-  another. Parent is a prominent entry choice: PIN opens Admin with no child
-  selected. Exit Admin returns to the selected child or, with none, the chooser.
+  Empty families show parent setup, not a placeholder child. Entered players
+  cannot select another player: explicit Log out returns to the chooser, locks
+  parent controls, closes dialogs, cancels pending PIN entry and template handoffs,
+  and resets the next entry to Today without changing saved data. Development
+  skips PIN prompts only, not logout. Adding/archiving/restoring a profile never
+  silently selects another. Parent is a prominent entry choice: PIN opens Admin
+  with no child selected. Exit Admin returns to the selected child or, with none, the chooser.
   Parent-only rename keeps profile IDs/balances/history; never rewrite saved
   names to match the first-run Alex/Chris defaults.
 - Players are archived/restored only by an unlocked parent, never deleted.
@@ -75,7 +77,7 @@
   outstanding active/pending duplicate. Reading exclusivity remains in force.
   Ask parent is an in-person PIN handoff, not a stored request: after unlock it
   opens the chosen template/child in Admin for deliberate deployment. Cancelling
-  or switching child clears this handoff. Shared ownership is never self-claimed.
+  or logging out clears this handoff. Shared ownership is never self-claimed.
 - Templates have `points` (lifetime XP), `coins`, nominal `penalty`, `cadence`
   (daily/weekly/on-demand), `ownership` (personal/shared), `mandatory`,
   `requiresReview`, title and emoji. `seed` enables first-run daily deployment;
