@@ -42,10 +42,6 @@
                 </button>
             </div>
 
-            <!-- Entered player identity and logout, including during Parent Admin. -->
-            <div id="kid-selector-bar" role="group" aria-label="Current player and logout" class="player-tabs hidden">
-                <!-- Current player and Log out inserted here -->
-            </div>
         </header>
 
         <!-- MAIN CONTENT AREA -->
@@ -64,52 +60,23 @@
 
                 <!-- Lifetime XP & Coins Banner -->
                 <div id="kid-hero-card" class="hero-card">
-                    <div class="hero-glow"></div>
-
                     <div class="hero-summary">
-                        <div class="card-identity">
-                            <div class="hero-avatar-wrap">
-                                <span id="hero-avatar" class="hero-avatar">🎮</span>
-                            </div>
-                            <div>
-                                <h2 id="hero-name" tabindex="-1" class="hero-name"></h2>
-                                <div class="hero-streak-row">
-                                    <span class="streak-badge">
-                                        <i data-lucide="flame" class="streak-icon"></i> <span id="hero-streak">0 Day Streak</span>
-                                    </span>
-                                </div>
-                            </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-label">Available Coins</span>
+                            <span id="hero-coins" class="hero-coins">0 Coins</span>
                         </div>
-
-                        <div class="player-balances">
-                            <div class="hero-xp-label">Lifetime XP</div>
-                            <div id="hero-points" class="hero-xp">0</div>
-                            <div id="hero-coins" class="hero-coins">0 Coins</div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-label">Lifetime XP</span>
+                            <span id="hero-points" class="hero-xp">0</span>
                         </div>
                     </div>
 
                     <p id="reading-progress" class="reading-progress" aria-live="polite"></p>
                 </div>
 
-                <div class="flex justify-between items-center">
-                    <details class="flex-1">
-                        <summary class="history-summary">History &amp; review</summary>
-                        <div class="task-tabs mt-2">
-                            <button onclick="setTaskTab('active')" id="tab-btn-active" class="task-tab is-active">
-                                Today (<span id="count-active">0</span>)
-                            </button>
-                            <button onclick="setTaskTab('pending')" id="tab-btn-pending" class="task-tab">
-                                Review (<span id="count-pending">0</span>)
-                            </button>
-                            <button onclick="setTaskTab('completed')" id="tab-btn-completed" class="task-tab">
-                                Done (<span id="count-completed">0</span>)
-                            </button>
-                            <button onclick="setTaskTab('missed')" id="tab-btn-missed" class="task-tab">
-                                Missed (<span id="count-missed">0</span>)
-                            </button>
-                        </div>
-                    </details>
-                    <button onclick="alert('How to play:\n• Complete your assigned chores today.\n• Tap “I did it” when finished.\n• Use Coins in the Rewards shop to redeem loot!')" class="ml-2 w-7 h-7 bg-slate-800 text-slate-300 rounded-full border border-slate-700 flex items-center justify-center font-bold text-xs shrink-0 hover:bg-slate-700 hover:text-white" title="Help">?</button>
+                <div class="section-heading">
+                    <h2 id="hero-name" tabindex="-1" class="section-title">Today</h2>
+                    <button onclick="alert('How to play:\n• Complete your assigned chores today.\n• Tap “I did it” when finished.\n• Use Coins in the Rewards shop to redeem loot!')" class="chore-help-button" aria-label="How to play">?</button>
                 </div>
 
                 <!-- Chores Quest List Container -->
@@ -124,6 +91,34 @@
                     <div id="catalog-choices" class="catalog-choices"></div>
                 </section>
 
+            </section>
+
+            <!-- VIEW: CURRENT PLAYER PROFILE -->
+            <section id="view-profile" class="app-view hidden" aria-labelledby="profile-heading">
+                <h2 id="profile-heading" tabindex="-1" class="section-title">My Profile</h2>
+                <div id="profile-summary" class="profile-summary"></div>
+                <h3 class="section-title">Chore history &amp; review</h3>
+                <p class="help-text">See your work waiting for a parent and your past chore results. Only a parent can approve submitted work.</p>
+                <div class="task-tabs profile-filters" role="group" aria-label="Filter your chore history">
+                    <button onclick="setTaskTab('pending')" id="tab-btn-pending" class="task-tab is-active" aria-pressed="true" aria-controls="profile-chores-list">
+                        Waiting (<span id="count-pending">0</span>)
+                    </button>
+                    <button onclick="setTaskTab('completed')" id="tab-btn-completed" class="task-tab" aria-pressed="false" aria-controls="profile-chores-list">
+                        Completed (<span id="count-completed">0</span>)
+                    </button>
+                    <button onclick="setTaskTab('missed')" id="tab-btn-missed" class="task-tab" aria-pressed="false" aria-controls="profile-chores-list">
+                        Missed / expired (<span id="count-missed">0</span>)
+                    </button>
+                </div>
+                <h3 id="profile-results-heading" class="profile-results-heading" aria-live="polite">Waiting for parent review</h3>
+                <p class="detail-text">History keeps the original chore date. Completed work may be instant or parent-reviewed; missed work may be automatic or parent-marked. Separate review dates and reasons are not recorded.</p>
+                <div id="profile-chores-list" class="chore-list" aria-labelledby="profile-results-heading"></div>
+                <div class="profile-account-actions">
+                    <button type="button" onclick="logoutPlayer()" class="parent-toggle" aria-label="Log out and return to profile chooser">
+                        <i data-lucide="log-out" class="parent-toggle-icon" aria-hidden="true"></i>
+                        <span>Log out</span>
+                    </button>
+                </div>
             </section>
 
             <!-- VIEW: REWARD SHOP -->
@@ -264,6 +259,10 @@
             <button onclick="switchMainView('shop')" id="nav-shop" class="nav-button">
                 <i data-lucide="shopping-bag" class="nav-icon"></i>
                 <span class="nav-label">Rewards</span>
+            </button>
+            <button onclick="switchMainView('profile')" id="nav-profile" class="nav-button">
+                <i data-lucide="user-round" class="nav-icon"></i>
+                <span class="nav-label">Profile</span>
             </button>
             <button onclick="switchMainView('parent')" id="nav-parent" class="nav-button hidden">
                 <i data-lucide="sliders" class="nav-icon"></i>

@@ -29,7 +29,7 @@ body {
 }
 @media (min-width: 768px) { body { padding-bottom: 1.5rem; } }
 h1, h2, h3,
-.player-tab-name, .hero-name, .hero-xp, .task-tab, .shop-title,
+.hero-name, .hero-xp, .task-tab, .shop-title,
 .coin-vault-balance, .panel-title, .quick-action-title, .nav-label,
 .modal-title, .submit-button, .pin-title, .complete-chore-button,
 .request-reward-button, .squad-name, .managed-player-name {
@@ -99,16 +99,16 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 /* Header and explicit profile choice. */
 .app-header {
     background: linear-gradient(to right, var(--surface), var(--surface-inset), var(--surface));
-    padding: 1.25rem 1rem 1rem; border-bottom: 1px solid var(--border); position: relative; z-index: 10;
+    padding: .5rem 1rem; border-bottom: 1px solid var(--border); position: relative; z-index: 10;
 }
-.header-toolbar { margin-bottom: .75rem; }
+.header-toolbar { gap: .5rem; min-height: 44px; }
 .brand-icon, .pin-emblem {
     background: rgb(255 70 85 / .2); color: var(--quest-red);
     border: 1px solid rgb(255 70 85 / .4); box-shadow: 0 0 15px rgb(255 70 85 / .35);
 }
-.brand-icon { padding: .5rem; border-radius: .75rem; }
+.brand-icon { padding: .375rem; border-radius: .625rem; }
 .brand-title {
-    font-size: 1.125rem; line-height: 1; font-weight: 700; letter-spacing: .05em;
+    font-size: 1rem; line-height: 1; font-weight: 700; letter-spacing: .05em;
     color: white; display: flex; align-items: center; gap: .375rem;
 }
 .brand-badge {
@@ -124,24 +124,6 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .parent-toggle > :not([hidden]) ~ :not([hidden]) { margin-left: .375rem; }
 .parent-toggle:hover { background: #334155; }
 .parent-toggle-icon, .panel-icon, .player-modal-icon, .toast-icon { color: var(--quest-cyan); }
-.player-tabs { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .625rem; padding-block: .25rem; }
-.player-tab {
-    display: flex; align-items: center; flex-shrink: 0; padding: .375rem .75rem; border-radius: .75rem;
-    font-size: .75rem; line-height: 1rem; font-weight: 700; white-space: nowrap;
-    background: var(--surface-inset); color: var(--muted); border: 1px solid var(--border);
-}
-.player-tab > :not([hidden]) ~ :not([hidden]) { margin-left: .375rem; }
-.player-tab:hover { color: white; }
-.player-tab.is-selected {
-    background: var(--quest-red); color: white; border-color: #f87171;
-    transform: scale(1.05); box-shadow: 0 0 15px rgb(255 70 85 / .35);
-}
-.player-tab-avatar { font-size: .875rem; line-height: 1.25rem; }
-.player-tab-xp {
-    background: rgb(0 0 0 / .4); color: var(--quest-yellow); padding-inline: .375rem;
-    border-radius: .25rem; font-family: var(--mono-font); font-size: 10px;
-}
-.player-tab > .player-tab-xp { margin-left: .25rem; }
 .entry-title { font-size: 1.25rem; line-height: 1.75rem; font-weight: 700; }
 .profile-choices { display: grid; gap: .75rem; }
 .profile-choice, .parent-choice {
@@ -154,25 +136,31 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 /* Player summary, chore tabs and catalog choices. */
 .hero-card {
     background: linear-gradient(to bottom right, var(--surface), var(--surface-inset));
-    border-radius: 1rem; padding: 1rem; border: 1px solid var(--border);
-    position: relative; overflow: hidden; box-shadow: var(--shadow-raised);
+    border-radius: .75rem; padding: .625rem .75rem; border: 1px solid var(--border);
 }
-.hero-glow {
-    position: absolute; right: -1.5rem; bottom: -1.5rem; width: 8rem; height: 8rem;
-    background: rgb(255 70 85 / .1); border-radius: 9999px; filter: blur(40px); pointer-events: none;
-}
-.hero-summary { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 10; }
-.hero-avatar-wrap { position: relative; }
+.hero-summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; }
+.hero-stat { display: flex; flex-wrap: wrap; align-items: baseline; gap: .375rem; }
+.hero-stat-label { font-size: .75rem; color: var(--secondary); }
 .hero-avatar { font-size: 1.875rem; line-height: 2.25rem; background: var(--surface-raised); padding: .625rem; border-radius: 1rem; border: 1px solid #334155; display: block; }
 .hero-name { font-size: 1.125rem; line-height: 1.75rem; font-weight: 700; color: white; }
-.hero-streak-row { display: flex; align-items: center; margin-top: .125rem; }
-.streak-badge { font-size: 10px; background: var(--surface-raised); color: #fbbf24; font-weight: 700; padding: .125rem .5rem; border-radius: 9999px; border: 1px solid rgb(251 191 36 / .3); display: flex; align-items: center; gap: .25rem; }
-.streak-icon { width: .75rem; height: .75rem; color: #fbbf24; fill: #fbbf24; }
-.hero-xp-label { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
-.hero-xp { font-size: 1.5rem; line-height: 2rem; font-weight: 900; color: var(--quest-yellow); filter: drop-shadow(0 1px 2px rgb(0 0 0 / .1)) drop-shadow(0 1px 1px rgb(0 0 0 / .06)); }
-.hero-coins { font-size: .75rem; line-height: 1rem; color: #fcd34d; font-weight: 700; }
-.reading-progress { margin-top: .75rem; font-size: .75rem; line-height: 1rem; color: var(--secondary); }
-.history-summary { font-size: .875rem; line-height: 1.25rem; color: var(--secondary); padding-block: .5rem; cursor: pointer; }
+.hero-xp, .hero-coins { font-size: 1rem; line-height: 1.5rem; font-weight: 700; color: var(--quest-yellow); overflow-wrap: anywhere; min-width: 0; }
+.reading-progress { margin-top: .25rem; font-size: .75rem; line-height: 1rem; color: var(--secondary); }
+@media (max-width: 380px) {
+    .brand-badge { display: none; }
+    .hero-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .hero-stat { flex-direction: column; gap: 0; }
+}
+.chore-help-button { width: 2.75rem; border-radius: 9999px; background: var(--surface-raised); border: 1px solid #334155; color: var(--secondary); font-weight: 700; }
+.chore-help-button:hover { background: #334155; color: white; }
+.profile-summary { background: linear-gradient(to bottom right, var(--surface), var(--surface-inset)); border: 1px solid var(--border); border-radius: 1rem; padding: 1rem; }
+.profile-summary .hero-name { overflow-wrap: anywhere; min-width: 0; }
+.profile-account-actions { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+.profile-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-block: 1rem; }
+.profile-stats dt { font-size: .75rem; line-height: 1rem; color: var(--secondary); }
+.profile-stats dd { font-family: var(--heading-font); font-weight: 700; font-size: 1.25rem; color: var(--quest-yellow); overflow-wrap: anywhere; }
+.profile-filters { flex-wrap: wrap; gap: .25rem; }
+.profile-filters .task-tab { padding: .5rem .25rem; min-width: 5rem; }
+.profile-results-heading { font-size: .875rem; font-weight: 700; color: var(--secondary); }
 .task-tabs { display: flex; background: var(--surface); padding: .25rem; border-radius: .75rem; font-size: .75rem; line-height: 1rem; font-weight: 700; border: 1px solid var(--border); color: var(--muted); }
 .task-tab { flex: 1 1 0%; padding-block: .5rem; border-radius: .5rem; text-align: center; color: var(--muted); }
 .task-tab:hover { color: white; }
@@ -377,11 +365,11 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
     transition: all 300ms cubic-bezier(.4, 0, .2, 1);
 }
 .toast.is-visible { transform: translate(-50%, 0); opacity: 1; pointer-events: auto; }
-.parent-toggle, .player-tab, .task-tab, .chore-card, .request-reward-button,
+.parent-toggle, .task-tab, .chore-card, .request-reward-button,
 .review-link, .quick-action, .nav-button {
     transition: all 150ms cubic-bezier(.4, 0, .2, 1);
 }
-.parent-toggle:active, .player-tab:active, .complete-chore-button:active,
+.parent-toggle:active, .complete-chore-button:active,
 .approve-button:active, .reject-button:active, .request-reward-button:active,
 .add-player-button:active, .deduct-coins-button:active, .add-coins-button:active,
 .quick-action:active, .nav-button:active, .submit-button:active { transform: scale(.96); }
