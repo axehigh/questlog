@@ -609,7 +609,7 @@
             container.innerHTML = '';
             const selectedKid = appState.kids.find(k => k.id === appState.activeKidId);
             document.getElementById('parent-scope').textContent = selectedKid
-                ? `Selected child: ${selectedKid.name}. Chore Review shows only this child; reward requests show all children. Log out to return to the profile chooser and lock parent controls.`
+                ? `Selected child: ${selectedKid.name}. Assignments below show all active players; Chore Review shows only this child. Reward requests show all children. Log out to return to the profile chooser and lock parent controls.`
                 : 'Parent Admin mode active. Review all squad chores, player balances, and vault rewards below.';
             const links = document.getElementById('parent-review-links');
             links.innerHTML = '';
@@ -627,26 +627,32 @@
             rewardsButton.onclick = () => switchMainView('shop');
             links.appendChild(rewardsButton);
 
-            // Render Squad Overview (Chores status per player)
+            // Read-only assignments for every active player, independent of child selection.
             const squadContainer = document.getElementById('parent-squad-overview');
             if (squadContainer) {
                 squadContainer.innerHTML = '';
-                appState.kids.forEach(kid => {
-                    const kidChores = appState.chores.filter(c => c.assignedTo === kid.id);
+                const date = today();
+                if (!activeKids().length) squadContainer.innerHTML = '<p class="help-text">No active players. Add or restore a player in Manage Players below to get started.</p>';
+                activeKids().forEach(kid => {
+                    const kidChores = appState.chores.filter(c => c.assignedTo === kid.id && (
+                        ['active', 'pending'].includes(c.status) ||
+                        (c.cadence === 'weekly' || c.bonus ? (c.period || weekStart(c.day)) === weekStart(date) : c.day === date)
+                    ));
+                    const order = c => c.status === 'pending' ? 0 : c.status === 'active' ? c.day > date ? 3 : c.mandatory ? 1 : 2 : 4;
+                    kidChores.sort((a, b) => order(a) - order(b) || a.day.localeCompare(b.day) || a.title.localeCompare(b.title));
                     const activeCount = kidChores.filter(c => c.status === 'active').length;
                     const pendingCount = kidChores.filter(c => c.status === 'pending').length;
-                    const completedToday = kidChores.filter(c => c.status === 'completed' && c.day === today()).length;
+                    const completedCount = kidChores.filter(c => c.status === 'completed').length;
                     const streak = getStreak(kid);
 
-                    const card = document.createElement('div');
+                    const card = document.createElement('section');
                     card.className = 'squad-card';
                     card.innerHTML = `
                         <div class="section-heading">
                             <div class="player-identity">
-                                <span class="squad-avatar">${escapeHTML(kid.avatar)}</span>
+                                <span class="squad-avatar" aria-hidden="true">${escapeHTML(kid.avatar)}</span>
                                 <div>
-                                    <span class="squad-name">${escapeHTML(kid.name)}</span>
-                                    ${kid.archived ? '<span class="archived-label">· Archived</span>' : ''}
+                                    <h4 class="squad-name">${escapeHTML(kid.name)}</h4>
                                 </div>
                             </div>
                             <div class="player-balances">
@@ -656,7 +662,7 @@
                         </div>
                         <div class="squad-stats">
                             <div class="squad-stat">
-                                <span class="stat-label">Active</span>
+                                <span class="stat-label">Active / upcoming</span>
                                 <span class="stat-value">${activeCount}</span>
                             </div>
                             <div class="squad-stat is-pending">
@@ -664,10 +670,22 @@
                                 <span class="stat-value">${pendingCount}</span>
                             </div>
                             <div class="squad-stat is-completed">
-                                <span class="stat-label">Done Today</span>
-                                <span class="stat-value">${completedToday}</span>
+                                <span class="stat-label">Completed in list</span>
+                                <span class="stat-value">${completedCount}</span>
                             </div>
                         </div>
+                        ${kidChores.length ? `<ul class="assignment-list">${kidChores.map(chore => {
+                            const status = chore.status === 'pending' ? 'Waiting for parent review' : chore.status === 'active' ? chore.day > date ? 'Scheduled' : 'Active' : chore.status === 'completed' ? 'Completed' : chore.status === 'missed' ? 'Missed' : 'Expired · no loss';
+                            const timing = chore.bonus ? `Reading bonus · week of ${chore.period}` : chore.daily || chore.archivedDaily ? `Daily · ${chore.day}` : chore.cadence === 'weekly' ? `Weekly · week of ${chore.period || weekStart(chore.day)}` : chore.scheduled ? `Session · ${chore.day}` : `On-demand · assigned ${chore.day}`;
+                            return `<li class="assignment-row">
+                                <div class="assignment-details">
+                                    <h5 class="assignment-title"><span aria-hidden="true">${escapeHTML(chore.emoji)}</span> ${escapeHTML(chore.title)}</h5>
+                                    <p class="detail-text"><strong>${chore.mandatory ? 'Required' : 'Optional'}</strong> · ${escapeHTML(timing)}${needsReview(chore) ? ' · Parent review' : ''}</p>
+                                    ${chore.status === 'pending' ? `<p class="muted-text">Submitted for ${escapeHTML(chore.day)}</p>` : ''}
+                                </div>
+                                <span class="assignment-status${chore.status === 'pending' ? ' is-pending' : chore.status === 'completed' ? ' is-completed' : ''}">${status}</span>
+                            </li>`;
+                        }).join('')}</ul>` : '<p class="help-text">No current assignments or outstanding reviews. Deploy a template or create a quest below to assign a chore.</p>'}
                     `;
                     squadContainer.appendChild(card);
                 });
