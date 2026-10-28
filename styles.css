@@ -268,6 +268,13 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .assignment-status.is-pending { color: #fcd34d; border-color: #854d0e; }
 .assignment-status.is-completed { color: #6ee7b7; border-color: #065f46; }
 .assignment-row > .review-actions { flex-basis: 100%; }
+.assignment-actions { display: flex; flex-wrap: wrap; gap: .5rem; flex-basis: 100%; }
+.change-owner-button, .remove-assignment-button { padding: .5rem .75rem; border: 1px solid #64748b; border-radius: .5rem; font-size: .75rem; font-weight: 700; }
+.change-owner-button { color: #67e8f9; }
+.remove-assignment-button, .assignment-error { color: #fda4af; }
+.change-owner-button:hover, .remove-assignment-button:hover { background: var(--surface-raised); }
+.change-owner-button:focus-visible, .remove-assignment-button:focus-visible { outline: 2px solid var(--quest-cyan); outline-offset: 3px; }
+.assignment-error { font-size: .875rem; overflow-wrap: anywhere; }
 .catalog-heading { font-size: .75rem; line-height: 1rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .5rem; }
 .catalog-scroll { max-height: 12rem; overflow-y: auto; padding-right: .25rem; }
 .catalog-scroll > :not([hidden]) ~ :not([hidden]) { margin-top: .375rem; }

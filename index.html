@@ -155,7 +155,7 @@
 
                 <!-- Master Overview Tabs / Sections -->
                 <div class="admin-panel">
-                    <h3 class="panel-title">
+                    <h3 id="assignments-heading" tabindex="-1" class="panel-title">
                         <i data-lucide="list-checks" class="panel-icon"></i> Assignments by Player
                     </h3>
                     <p class="detail-text">All active players, no profile switching needed. Live assignments, future sessions and outstanding reviews, plus results for the current day or weekly period. Older results stay in player history; archived players are separate in Manage Players.</p>
@@ -273,6 +273,30 @@
     </div>
 
     <!-- MODALS -->
+
+    <!-- Modal: Change assignment owner -->
+    <div id="modal-assignment" class="modal hidden">
+        <div class="modal-panel">
+            <div class="modal-heading">
+                <h3 class="modal-title">Change task owner</h3>
+                <button type="button" onclick="closeModal('modal-assignment')" aria-label="Close change owner form" class="modal-close"><i data-lucide="x" class="nav-icon"></i></button>
+            </div>
+            <p id="assignment-summary" class="help-text"></p>
+            <form onsubmit="changeAssignmentOwner(event)" class="app-form">
+                <input type="hidden" id="assignment-id">
+                <input type="hidden" id="assignment-owner">
+                <div>
+                    <label for="assignment-target" class="form-label">New owner</label>
+                    <select id="assignment-target" required class="form-input player-input" aria-describedby="assignment-summary assignment-error"></select>
+                </div>
+                <p id="assignment-error" role="alert" class="assignment-error"></p>
+                <div class="form-actions">
+                    <button type="button" onclick="closeModal('modal-assignment')" class="cancel-button">Cancel</button>
+                    <button type="submit" class="submit-button submit-player">Change owner</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Modal: Add / Edit Quest -->
     <div id="modal-chore" class="modal hidden">

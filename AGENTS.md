@@ -91,8 +91,12 @@
   personal optional choices can be selected by the child.
 - Parent Admin deploys source templates individually for existing families too.
   Shared jobs cannot be duplicated across players for a period or while pending.
-  Daily/weekly deployments repeat for the chosen owner until deleted; no
-  automatic owner rotation. Delete an unsubmitted assignment before reassigning.
+  Daily/weekly deployments repeat for the chosen owner until removed; no
+  automatic owner rotation. Unlocked parents can remove or change the owner of
+  active, unsubmitted work in Assignments by Player; removal stops recurrence.
+  Reassignment keeps prior results/reviews with their original player and is
+  blocked by duplicate assignments, reserved reviews, period results or reading
+  exclusivity. Neither action awards XP/Coins or applies a miss/penalty.
   Custom tasks target one player; catalog task names must use template deployment.
 - Recognizable shared duplicates in older saves are preserved but block payout
   until a parent removes duplicate unsubmitted assignments and chooses one owner.

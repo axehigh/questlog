@@ -286,7 +286,7 @@
                 if (saved.etag !== serverETag) {
                     loadFromStorage(saved.data);
                     serverETag = saved.etag;
-                    ['modal-chore','modal-kid','modal-reward','modal-pin'].forEach(closeModal);
+                    ['modal-chore','modal-kid','modal-reward','modal-pin','modal-assignment'].forEach(closeModal);
                     requestedTemplateId = null;
                     if (appState.activeKidId && !activePlayer(appState.activeKidId)) {
                         appState.activeKidId = null;
@@ -469,7 +469,7 @@
                     parentExtras = `
                         <div class="chore-parent-actions">
                             <button onclick="failChore('${chore.id}')" class="mark-missed-button">Mark missed (Coins only)</button>
-                            ${chore.bonus ? '' : `<button onclick="deleteChore('${chore.id}')" class="delete-chore-button">Delete</button>`}
+                            ${assignmentEditable(chore) ? `<button onclick="deleteChore('${chore.id}')" class="delete-chore-button">Remove</button>` : ''}
                         </div>
                     `;
                 }
@@ -502,9 +502,9 @@
 
         // Source catalog is parent-owned. Only small, optional personal chores are self-selectable.
         const childCanChoose = t => t.ownership === 'personal' && !t.mandatory && !t.scheduled && !t.bonus && !needsReview(t);
-        function templateDuplicate(template, kidId, date = today(), childChoice = false) {
+        function templateDuplicate(template, kidId, date = today(), childChoice = false, excludeId = null) {
             const period = template.cadence === 'weekly' ? weekStart(date) : date;
-            return appState.chores.find(c => (activePlayer(c.assignedTo) || c.status === 'completed') && (c.templateId === template.id || c.title === template.title) &&
+            return appState.chores.find(c => c.id !== excludeId && (activePlayer(c.assignedTo) || ['pending','completed'].includes(c.status)) && (c.templateId === template.id || c.title === template.title) &&
                 (template.ownership === 'shared' || c.assignedTo === kidId) &&
                 (['active','pending'].includes(c.status) ||
                     ((template.cadence !== 'on-demand' || childChoice) &&
@@ -695,6 +695,10 @@
                                     <button type="button" onclick="approveChore('${chore.id}')" class="approve-button" aria-label="${escapeHTML(`Approve ${chore.title} for ${kid.name}`)}">Approve</button>
                                     <button type="button" onclick="rejectChore('${chore.id}')" class="reject-button" aria-label="${escapeHTML(`${chore.bonus ? 'Decline weekly bonus' : 'Mark missed'}: ${chore.title} for ${kid.name}`)}">${chore.bonus ? 'Decline bonus' : 'Mark missed'}</button>
                                 </div>` : ''}
+                                ${assignmentEditable(chore) ? `<div class="assignment-actions">
+                                    <button type="button" onclick="openChangeOwner('${chore.id}')" class="change-owner-button" aria-label="${escapeHTML(`Change owner: ${chore.title} for ${kid.name}`)}">Change owner</button>
+                                    <button type="button" onclick="deleteChore('${chore.id}')" class="remove-assignment-button" aria-label="${escapeHTML(`Remove ${chore.title} from ${kid.name}`)}">Remove</button>
+                                </div>` : ''}
                             </li>`;
                         }).join('')}</ul>` : '<p class="help-text">No current assignments or outstanding reviews. Assign a task from the catalog or create a quest below.</p>'}
                     `;
@@ -878,7 +882,7 @@
             const date = template?.scheduled ? document.getElementById('template-date').value : today();
             if (!template || template.bonus || !activePlayer(kidId) || !/^\d{4}-\d{2}-\d{2}$/.test(date) || date < today()) return showToast('Choose an active player and a current/future session date.', 'alert-circle');
             const duplicate = templateDuplicate(template, kidId, date);
-            if (duplicate) return showToast('Already assigned or recorded for this period. Shared jobs have only one owner; delete an unsubmitted assignment before moving it.', 'alert-circle');
+            if (duplicate) return showToast('Already assigned or recorded for this period. Use Assignments by Player to change the owner of active, unsubmitted work.', 'alert-circle');
             appState.chores.push(templateQuest(template, kidId, date));
             saveToStorage();
             renderApp();
@@ -992,7 +996,7 @@
             if (storageFailed || appState.activeKidId || appState.isParentMode || !activePlayer(id)) return;
             appState.isParentMode = false;
             requestedTemplateId = null;
-            ['modal-chore','modal-kid','modal-reward','modal-pin'].forEach(closeModal);
+            ['modal-chore','modal-kid','modal-reward','modal-pin','modal-assignment'].forEach(closeModal);
             appState.activeKidId = id;
             switchMainView('chores');
             setTaskTab('active');
@@ -1006,7 +1010,7 @@
             appState.activeKidId = null;
             appState.isParentMode = false;
             requestedTemplateId = null;
-            ['modal-chore','modal-kid','modal-reward','modal-pin'].forEach(closeModal);
+            ['modal-chore','modal-kid','modal-reward','modal-pin','modal-assignment'].forEach(closeModal);
             appState.activeView = 'chores';
             setTaskTab('active');
             document.getElementById('template-player').value = '';
@@ -1177,7 +1181,7 @@
                 requestedTemplateId = null;
                 appState.activeView = 'chores';
                 switchMainView('chores');
-                ['modal-chore','modal-kid','modal-reward'].forEach(closeModal);
+                ['modal-chore','modal-kid','modal-reward','modal-assignment'].forEach(closeModal);
                 document.getElementById('mode-btn-text').textContent = 'Parent PIN';
                 showToast('Switched to Player Mode', 'user');
                 renderApp();
@@ -1258,6 +1262,7 @@
             const modal = document.getElementById(id);
             const wasOpen = !modal.classList.contains('hidden');
             modal.classList.add('hidden');
+            if (id === 'modal-assignment') document.getElementById('assignment-id').value = '';
             if (id === 'modal-pin') {
                 pinContext = null;
                 document.getElementById('pin-input').value = '';
@@ -1332,18 +1337,82 @@
             renderApp();
         }
 
-        function deleteChore(id) {
-            if (!appState.isParentMode) return;
+        function assignmentEditable(chore) {
+            if (storageFailed || prototypeResetInProgress || !appState.isParentMode || !chore || !activePlayer(chore.assignedTo)) return false;
+            if (chore.status !== 'active' || chore.bonus || chore.archived || chore.archivedDaily) return false;
+            if (chore.daily && chore.day !== today()) return false;
+            if (chore.cadence === 'weekly' && (chore.period || weekStart(chore.day)) !== weekStart(today())) return false;
+            if (chore.scheduled && chore.day < today()) return false;
+            return !Object.values(activePlayer(chore.assignedTo).days).some(day => day.completed.includes(chore.id));
+        }
+
+        function releaseAssignmentDay(chore) {
+            const day = activePlayer(chore.assignedTo).days[chore.day];
+            if (day) day.required = day.required.filter(id => id !== chore.id);
+        }
+
+        async function deleteChore(id) {
             const chore = appState.chores.find(c => c.id === id);
-            if (chore && !activePlayer(chore.assignedTo)) return;
-            if (chore?.bonus) return showToast('Approve or reject the weekly bonus; its weekly claim record is retained.', 'alert-circle');
-            if (chore) {
-                const day = dayRecord(appState.kids.find(k => k.id === chore.assignedTo), chore.day);
-                day.required = day.required.filter(required => required !== id);
-            }
+            if (!assignmentEditable(chore)) return;
+            const ownerId = chore.assignedTo;
+            const owner = activePlayer(ownerId);
+            if (!window.confirm(`Remove “${chore.title}” from ${owner.name}? ${isRecurring(chore) ? 'This stops future daily/weekly recurrence. ' : ''}No XP, Coins, miss or penalty is applied. Past results and pending reviews are kept.`)) return;
+            if (appState.chores.find(c => c.id === id) !== chore || chore.assignedTo !== ownerId || !assignmentEditable(chore)) return;
+            releaseAssignmentDay(chore);
             appState.chores = appState.chores.filter(c => c.id !== id);
-            saveToStorage();
+            await saveToStorage();
+            if (storageFailed) return;
             renderApp();
+            document.getElementById('assignments-heading').focus();
+            showToast('Assignment removed. No award or penalty applied.', 'check');
+        }
+
+        function openChangeOwner(id) {
+            const chore = appState.chores.find(c => c.id === id);
+            if (!assignmentEditable(chore)) return;
+            document.getElementById('assignment-id').value = id;
+            document.getElementById('assignment-owner').value = chore.assignedTo;
+            document.getElementById('assignment-summary').textContent = `Move “${chore.title}” from ${activePlayer(chore.assignedTo).name}. ${isRecurring(chore) ? 'Daily/weekly work will keep the new owner in subsequent periods. ' : ''}No XP, Coins, miss or penalty is applied. Past results and pending reviews stay with their original player.`;
+            document.getElementById('assignment-target').innerHTML = '<option value="">Choose a different player</option>' + activeKids().filter(k => k.id !== chore.assignedTo).map(k => `<option value="${k.id}">${escapeHTML(k.name)}</option>`).join('');
+            document.getElementById('assignment-error').textContent = '';
+            openModal('modal-assignment');
+        }
+
+        async function changeAssignmentOwner(event) {
+            event.preventDefault();
+            const chore = appState.chores.find(c => c.id === document.getElementById('assignment-id').value);
+            const ownerId = document.getElementById('assignment-owner').value;
+            const target = activePlayer(document.getElementById('assignment-target').value);
+            const error = document.getElementById('assignment-error');
+            if (!assignmentEditable(chore) || chore.assignedTo !== ownerId || !target || target.id === ownerId) {
+                error.textContent = 'This assignment or player is no longer eligible. Close this form and check the current assignments.';
+                return;
+            }
+            const template = catalog.chores.find(t => t.id === chore.templateId || t.title === chore.title) || {...chore, id: chore.templateId || chore.id, ownership: 'personal', cadence: chore.cadence || (chore.daily ? 'daily' : 'on-demand')};
+            // Unsubmitted non-daily work earns on submission day, not its original assignment date.
+            const earningDay = chore.day > today() ? chore.day : today();
+            const sameJob = c => c.id !== chore.id && ((chore.templateId && c.templateId === chore.templateId) || c.title === chore.title);
+            const samePeriod = c => template.cadence === 'weekly' ? (c.period || weekStart(c.day)) === (chore.period || weekStart(chore.day)) : c.day === earningDay;
+            const reserved = appState.chores.some(c => sameJob(c) &&
+                (template.ownership === 'shared' || c.assignedTo === ownerId || c.assignedTo === target.id) &&
+                ((c.status === 'pending' && (template.ownership === 'shared' || samePeriod(c))) || (c.status === 'completed' && samePeriod(c))));
+            if (reserved || templateDuplicate(template, target.id, earningDay, true, chore.id) ||
+                readingBlocked({...chore, day: earningDay}) || readingBlocked({...chore, assignedTo: target.id, day: earningDay})) {
+                error.textContent = 'Cannot move this task: an assignment, pending review, previous result or reading choice reserves this job/period. Keep the existing record; remove an incorrect unsubmitted duplicate first.';
+                return;
+            }
+            releaseAssignmentDay(chore);
+            chore.assignedTo = target.id;
+            if (chore.daily && chore.mandatory) {
+                const day = dayRecord(target, chore.day);
+                if (!day.required.includes(chore.id)) day.required.push(chore.id);
+            }
+            closeModal('modal-assignment');
+            await saveToStorage();
+            if (storageFailed) return;
+            renderApp();
+            document.getElementById('assignments-heading').focus();
+            showToast(`Assignment moved to ${target.name}. No award or penalty applied.`, 'check');
         }
 
         function openAddKidModal() {
