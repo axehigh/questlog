@@ -149,6 +149,7 @@
 
         // --- INIT & PERSISTENCE ---
         window.onload = async function() {
+            let rendering = false;
             try {
                 document.getElementById('app').inert = true;
                 const pinResponse = await fetch('api.php?action=pin', {cache: 'no-store'});
@@ -173,6 +174,7 @@
                 if (saved.data === null && !pendingWrites) saveToStorage();
                 await saveQueue;
                 if (storageFailed) return;
+                rendering = true;
                 initEmojiPickers();
                 renderApp();
                 document.getElementById('app').inert = false;
@@ -180,8 +182,12 @@
                 document.addEventListener('keydown', handleModalKey);
                 setInterval(refreshFromServer, 60000);
             } catch (error) {
+                console.error('Chore Quest startup failed', error);
                 document.getElementById('app').inert = false;
-                document.getElementById('app').textContent = `Unable to load Chore Quest: ${error.message}. Check data/catalog.json and the PHP storage service, then reload. No browser-only fallback is used. Serve this folder with npm run dev; file:// and static hosting are not supported.`;
+                const help = rendering
+                    ? 'The interface could not start. Deploy matching index.html, app.js, styles.css and tailwind.config.js, clear the site cache and reload. Check the browser console for the original error and stack trace; do not reset family data to fix an interface error.'
+                    : 'Check data/catalog.json and the PHP storage service, then reload. No browser-only fallback is used. Serve this folder with npm run dev; file:// and static hosting are not supported.';
+                document.getElementById('app').textContent = `Unable to load Chore Quest: ${error.message}. ${help}`;
             }
         };
 
@@ -444,7 +450,7 @@
                                 <button onclick="approveChore('${chore.id}')" class="approve-button" aria-label="Approve quest" title="Approve (+${chore.points} XP, +${chore.coins} Coins)">
                                     <i data-lucide="check" class="action-icon"></i>
                                 </button>
-                                <button onclick="rejectChore('${chore.id}')" class="reject-button" aria-label="Reject quest" title="Missed (bounded Coin penalty only)">
+                                <button onclick="rejectChore('${chore.id}')" class="reject-button" aria-label="${chore.bonus ? 'Decline weekly bonus' : 'Mark quest missed'}" title="${chore.bonus ? 'Decline this weekly claim; it cannot be claimed again' : 'Missed (bounded Coin penalty only)'}">
                                     <i data-lucide="x" class="action-icon"></i>
                                 </button>
                             </div>
@@ -609,7 +615,7 @@
             container.innerHTML = '';
             const selectedKid = appState.kids.find(k => k.id === appState.activeKidId);
             document.getElementById('parent-scope').textContent = selectedKid
-                ? `Selected child: ${selectedKid.name}. Assignments below show all active players; Chore Review shows only this child. Reward requests show all children. Log out to return to the profile chooser and lock parent controls.`
+                ? `Selected child: ${selectedKid.name}. Review pending assignments for all active players below; Chore Review shows only this child. Reward requests show all children. Log out to return to the profile chooser and lock parent controls.`
                 : 'Parent Admin mode active. Review all squad chores, player balances, and vault rewards below.';
             const links = document.getElementById('parent-review-links');
             links.innerHTML = '';
@@ -627,7 +633,7 @@
             rewardsButton.onclick = () => switchMainView('shop');
             links.appendChild(rewardsButton);
 
-            // Read-only assignments for every active player, independent of child selection.
+            // Assignments and pending reviews for every active player, independent of child selection.
             const squadContainer = document.getElementById('parent-squad-overview');
             if (squadContainer) {
                 squadContainer.innerHTML = '';
@@ -681,11 +687,16 @@
                                 <div class="assignment-details">
                                     <h5 class="assignment-title"><span aria-hidden="true">${escapeHTML(chore.emoji)}</span> ${escapeHTML(chore.title)}</h5>
                                     <p class="detail-text"><strong>${chore.mandatory ? 'Required' : 'Optional'}</strong> · ${escapeHTML(timing)}${needsReview(chore) ? ' · Parent review' : ''}</p>
-                                    ${chore.status === 'pending' ? `<p class="muted-text">Submitted for ${escapeHTML(chore.day)}</p>` : ''}
+                                    ${chore.status === 'pending' ? `<p class="muted-text">Submitted for ${escapeHTML(chore.day)} · If approved: +${chore.points} XP · +${chore.coins} Coins</p>
+                                    <p class="muted-text">${chore.bonus ? 'Declining retains the weekly decision; this bonus cannot be claimed again.' : `Marking missed awards no XP or Coins. Nominal penalty ${chore.penalty}; max ${maxPenalty(chore)} Coins, bounded by original-day earnings and balance. XP is safe.`}</p>` : ''}
                                 </div>
                                 <span class="assignment-status${chore.status === 'pending' ? ' is-pending' : chore.status === 'completed' ? ' is-completed' : ''}">${status}</span>
+                                ${appState.isParentMode && chore.status === 'pending' ? `<div class="review-actions">
+                                    <button type="button" onclick="approveChore('${chore.id}')" class="approve-button" aria-label="${escapeHTML(`Approve ${chore.title} for ${kid.name}`)}">Approve</button>
+                                    <button type="button" onclick="rejectChore('${chore.id}')" class="reject-button" aria-label="${escapeHTML(`${chore.bonus ? 'Decline weekly bonus' : 'Mark missed'}: ${chore.title} for ${kid.name}`)}">${chore.bonus ? 'Decline bonus' : 'Mark missed'}</button>
+                                </div>` : ''}
                             </li>`;
-                        }).join('')}</ul>` : '<p class="help-text">No current assignments or outstanding reviews. Deploy a template or create a quest below to assign a chore.</p>'}
+                        }).join('')}</ul>` : '<p class="help-text">No current assignments or outstanding reviews. Assign a task from the catalog or create a quest below.</p>'}
                     `;
                     squadContainer.appendChild(card);
                 });
@@ -852,7 +863,7 @@
         function renderTemplateDetails() {
             const template = catalog.chores.find(c => c.id === document.getElementById('template-choice').value);
             if (!template) return;
-            document.getElementById('template-details').textContent = `${template.points} lifetime XP / ${template.coins} Coins · ${template.ownership} · ${template.scheduled ? 'scheduled session' : template.cadence} · nominal penalty ${template.penalty}, applied max ${maxPenalty(template)} (also bounded by original-day earnings and balance). ${template.bonus ? 'Automatically queued for parent confirmation after five distinct reading days; not manually deployable.' : template.ownership === 'shared' ? 'ONE player per household job. Daily/weekly deployment repeats for this player until deleted.' : 'Deploy separately to each player who needs it. Daily/weekly deployment repeats until deleted.'}`;
+            document.getElementById('template-details').textContent = `${template.points} lifetime XP / ${template.coins} Coins · ${template.ownership} · ${template.scheduled ? 'scheduled session' : template.cadence} · ${needsReview(template) ? 'Parent review required' : 'No parent review required'} · nominal penalty ${template.penalty}, applied max ${maxPenalty(template)} (also bounded by original-day earnings and balance). ${template.bonus ? 'Automatically queued for parent confirmation after five distinct reading days; not manually assignable.' : template.ownership === 'shared' ? 'ONE player per household job. Daily/weekly assignment repeats for this player until deleted.' : 'Assign separately to each player who needs it. Daily/weekly assignment repeats until deleted.'}`;
             document.getElementById('template-date-field').classList.toggle('hidden', !template.scheduled);
             document.getElementById('template-date').disabled = !template.scheduled;
             document.getElementById('template-deploy').disabled = !!template.bonus;
@@ -867,11 +878,11 @@
             const date = template?.scheduled ? document.getElementById('template-date').value : today();
             if (!template || template.bonus || !activePlayer(kidId) || !/^\d{4}-\d{2}-\d{2}$/.test(date) || date < today()) return showToast('Choose an active player and a current/future session date.', 'alert-circle');
             const duplicate = templateDuplicate(template, kidId, date);
-            if (duplicate) return showToast('Already deployed or recorded for this period. Shared jobs have only one owner; delete an unsubmitted assignment before moving it.', 'alert-circle');
+            if (duplicate) return showToast('Already assigned or recorded for this period. Shared jobs have only one owner; delete an unsubmitted assignment before moving it.', 'alert-circle');
             appState.chores.push(templateQuest(template, kidId, date));
             saveToStorage();
             renderApp();
-            showToast('Catalog template deployed to one player.', 'crosshair');
+            showToast('Selected task assigned to one player.', 'crosshair');
         }
 
         function importDefaultRewards() {
@@ -942,12 +953,13 @@
         }
 
         function grantChore(chore) {
-            if (!activePlayer(chore.assignedTo)) return;
+            if (storageFailed || prototypeResetInProgress || !activePlayer(chore.assignedTo)) return;
             if (!['active','pending'].includes(chore.status)) return;
             if (!appState.isParentMode && (chore.status !== 'active' || chore.assignedTo !== appState.activeKidId || needsReview(chore))) return;
             if (sharedJobBlocked(chore)) return showToast('Shared job already assigned/claimed. Parent: delete duplicate unsubmitted assignments and choose ONE owner.', 'alert-circle');
             if (readingBlocked(chore) || chore.day > today()) return showToast('Only one reading option per local day; future sessions cannot be claimed.', 'alert-circle');
             const kid = appState.kids.find(k => k.id === chore.assignedTo);
+            if (kid.days[chore.day]?.completed.includes(chore.id)) return;
             if (chore.bonus === 'reading' && (!appState.isParentMode || kid?.readingBonuses?.[chore.period] !== 'pending' || new Set((kid.readingDays || []).filter(d => weekStart(d) === chore.period)).size < chore.requiredDays)) return;
             if (!kid || !validAmount(kid.xp + chore.points) || !validAmount(kid.coins + chore.coins) || !validAmount(dayRecord(kid, chore.day).earned + chore.coins)) return showToast('Balance limit reached.', 'alert-circle');
             chore.status = 'completed';
@@ -1030,6 +1042,7 @@
 
         // Submit Quest for Completion
         function markChoreDone(choreId) {
+            if (storageFailed || prototypeResetInProgress) return;
             const rolled = rollDailyQuests();
             const chore = appState.chores.find(c => c.id === choreId);
             if (!chore || !activePlayer(chore.assignedTo) || chore.status !== 'active' || (!appState.isParentMode && chore.assignedTo !== appState.activeKidId)) {
@@ -1057,19 +1070,22 @@
 
         // Approve Quest (Parent)
         function approveChore(choreId) {
-            if (!appState.isParentMode) return;
+            if (storageFailed || prototypeResetInProgress || !appState.isParentMode) return;
             const chore = appState.chores.find(c => c.id === choreId);
-            if (!chore || chore.status !== 'pending') return;
+            if (!chore || !activePlayer(chore.assignedTo) || chore.status !== 'pending') return;
             grantChore(chore);
         }
 
         function rejectChore(choreId) {
+            if (storageFailed || prototypeResetInProgress || !appState.isParentMode) return;
+            const chore = appState.chores.find(c => c.id === choreId);
+            if (!chore || !activePlayer(chore.assignedTo) || chore.status !== 'pending') return;
             failChore(choreId);
         }
 
         // Fail Quest / Apply Penalty
         function failChore(choreId) {
-            if (!appState.isParentMode) return;
+            if (storageFailed || prototypeResetInProgress || !appState.isParentMode) return;
             const rolled = rollDailyQuests();
             const chore = appState.chores.find(c => c.id === choreId);
             if (!chore || !activePlayer(chore.assignedTo) || !['active','pending'].includes(chore.status)) {
@@ -1079,11 +1095,16 @@
                 }
                 return;
             }
+            const kid = activePlayer(chore.assignedTo);
+            if (chore.bonus && kid.readingBonuses?.[chore.period] !== 'pending') return;
+            if (!window.confirm(chore.bonus
+                ? `Decline ${chore.title} for ${kid.name} (week of ${chore.period})? No award is granted. This weekly decision is retained and cannot be claimed again.`
+                : `Mark ${chore.title} missed for ${kid.name} on ${chore.day}? No award is granted. The Coin loss is at most ${maxPenalty(chore)} (nominal ${chore.penalty}), bounded by original-day earnings and balance. XP is safe.`)) return;
             const loss = applyMiss(chore);
 
             saveToStorage();
             playGamerSound('penalty');
-            showToast(`Missed: -${loss} Coins. XP is safe.`, 'alert-triangle');
+            showToast(chore.bonus ? 'Weekly bonus declined. This weekly decision is retained.' : `Missed: -${loss} Coins. XP is safe.`, 'alert-triangle');
             renderApp();
         }
 

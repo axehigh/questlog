@@ -199,7 +199,7 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 }
 .complete-chore-button:hover { background: linear-gradient(to right, #10b981, #34d399); }
 .complete-chore-button:disabled, .deploy-template-button:disabled { opacity: .4; }
-.review-actions { display: flex; gap: .375rem; }
+.review-actions { display: flex; flex-wrap: wrap; gap: .375rem; }
 .approve-button, .reject-button { padding: .5rem; border-radius: .75rem; font-weight: 700; }
 .approve-button { background: #10b981; color: #020617; }
 .reject-button { background: var(--quest-red); color: white; }
@@ -267,6 +267,7 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .assignment-status { flex: 0 1 auto; max-width: 100%; font-size: .75rem; line-height: 1rem; color: var(--secondary); background: var(--surface-raised); border: 1px solid #475569; border-radius: .5rem; padding: .25rem .5rem; }
 .assignment-status.is-pending { color: #fcd34d; border-color: #854d0e; }
 .assignment-status.is-completed { color: #6ee7b7; border-color: #065f46; }
+.assignment-row > .review-actions { flex-basis: 100%; }
 .catalog-heading { font-size: .75rem; line-height: 1rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .5rem; }
 .catalog-scroll { max-height: 12rem; overflow-y: auto; padding-right: .25rem; }
 .catalog-scroll > :not([hidden]) ~ :not([hidden]) { margin-top: .375rem; }

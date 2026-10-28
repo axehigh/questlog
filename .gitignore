@@ -3,3 +3,5 @@
 /state/*
 !/state/.gitkeep
 /.env
+/.playwright-mcp/console-2026-10-28T21-00-05-817Z.log
+/.playwright-mcp/page-2026-10-28T21-00-06-464Z.yml

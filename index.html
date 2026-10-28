@@ -185,7 +185,7 @@
                     <h3 class="panel-title">
                         <i data-lucide="book-open" class="catalog-panel-icon"></i> Master Chore Templates &amp; Rewards Catalog
                     </h3>
-                    <p class="detail-text">Templates are available chores, not player assignments. Use Deploy Template below to assign one; actual assignments appear above. Vault rewards are listed separately.</p>
+                    <p class="detail-text">Templates are available chores, not player assignments. Use Assign Task below to assign one; actual assignments appear above. Vault rewards are listed separately.</p>
                     <div class="catalog-sections">
                         <div>
                             <h4 class="catalog-heading">Source Chore Templates</h4>
@@ -218,8 +218,8 @@
                 </div>
 
                 <div class="template-panel">
-                    <h3 class="panel-title">Source Catalog → Deploy Template</h3>
-                    <p class="muted-text">Deploy templates to players. Shared chores pay ONE named player. Weekly tasks repeat Mon–Sun.</p>
+                    <h3 class="panel-title">Source Catalog → Assign Task</h3>
+                    <p class="muted-text">Assign tasks to players. Shared chores pay ONE named player. Weekly tasks repeat Mon–Sun.</p>
                     <form onsubmit="deployTemplate(event)" class="app-form">
                         <label for="template-choice" class="template-label">Task template</label>
                         <select id="template-choice" onchange="renderTemplateDetails()" class="template-input"></select>
@@ -230,7 +230,7 @@
                             <label for="template-date" class="template-label">Training session date</label>
                             <input id="template-date" type="date" required class="template-input">
                         </div>
-                        <button id="template-deploy" type="submit" class="deploy-template-button">Deploy selected template</button>
+                        <button id="template-deploy" type="submit" class="deploy-template-button">Assign selected task</button>
                     </form>
                     <button onclick="importDefaultRewards()" class="import-rewards-button">Add missing default rewards (confirm first)</button>
                 </div>
