@@ -340,6 +340,7 @@
             });
             document.getElementById('mode-toggle-btn').classList.toggle('hidden', !!kid && !appState.isParentMode);
             document.getElementById('mode-btn-text').textContent = appState.isParentMode ? 'Exit Admin' : 'Parent PIN';
+            document.getElementById('brand-name').textContent = kid ? `${kid.name}'s CHORE QUEST` : 'CHORE QUEST';
             document.getElementById('mode-subtitle').textContent = appState.isParentMode ? 'Parent controls unlocked' : kid ? 'Chores & rewards' : 'Choose your profile to start';
         }
 
@@ -409,8 +410,7 @@
                 container.innerHTML = `<h3 class="section-title">Required today · ${required.length} left</h3>${required.length ? '<p class="help-text">Start with these assigned chores.</p>' : '<p class="success-text">No required chores left to do. Anything waiting for a parent still needs their check.</p>'}`;
             }
 
-            if (filtered.length === 0) {
-                if (tab === 'active') return;
+            if (filtered.length === 0 && tab !== 'active') {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">👾</div>
@@ -422,12 +422,22 @@
             }
 
             let lastGroup = 0;
+            let weeklyChoicesAdded = false;
+            const addWeeklyChoices = () => {
+                if (weeklyChoicesAdded || tab !== 'active' || !kid) return;
+                weeklyChoicesAdded = true;
+                if (!filtered.some(c => group(c) === 1)) {
+                    container.insertAdjacentHTML('beforeend', '<h3 class="chore-group-title">Optional chores</h3>');
+                }
+                container.insertAdjacentHTML('beforeend', '<section class="weekly-choices" aria-labelledby="weekly-choices-heading"><h4 id="weekly-choices-heading" class="weekly-choices-title">Choose a weekly chore</h4><div id="weekly-catalog-choices" class="catalog-choices"></div></section>');
+            };
             filtered.forEach(chore => {
+                if (group(chore) > 1) addWeeklyChoices();
                 if (tab === 'active' && group(chore) !== lastGroup) {
                     lastGroup = group(chore);
                     const heading = document.createElement('h3');
                     heading.className = 'chore-group-title';
-                    heading.textContent = ['', 'Optional · already assigned to you', 'Coming up · assigned to you', 'Waiting for parent review'][lastGroup];
+                    heading.textContent = ['', 'Optional chores', 'Coming up · assigned to you', 'Waiting for parent review'][lastGroup];
                     container.appendChild(heading);
                 }
                 const card = document.createElement('div');
@@ -479,14 +489,19 @@
                         <div class="card-identity">
                             <span class="chore-avatar">${escapeHTML(chore.emoji)}</span>
                             <div>
-                                <h4 class="chore-title">${escapeHTML(chore.title)}</h4>
-                                <p class="item-meta">${chore.day} · ${chore.bonus ? `Reading bonus · week of ${escapeHTML(chore.period)}` : chore.daily || chore.archivedDaily ? (chore.mandatory ? 'Mandatory daily' : 'Optional daily') : chore.cadence === 'weekly' ? `Weekly · week of ${escapeHTML(chore.period)}` : chore.scheduled ? 'Scheduled session' : 'On-demand'}${needsReview(chore) ? ' · Parent review' : ''}</p>
+                                <div class="chore-title-row"><h4 class="chore-title">${escapeHTML(chore.title)}</h4>${chore.cadence === 'weekly' ? '<span class="weekly-badge">Weekly</span>' : ''}</div>
+                                <p class="item-meta">${chore.day} · ${chore.bonus ? `Reading bonus · week of ${escapeHTML(chore.period)}` : chore.daily || chore.archivedDaily ? (chore.mandatory ? 'Mandatory daily' : 'Optional daily') : chore.cadence === 'weekly' ? `Week of ${escapeHTML(chore.period || weekStart(chore.day))}` : chore.scheduled ? 'Scheduled session' : 'On-demand'}${needsReview(chore) ? ' · Parent review' : ''}</p>
                                 <div class="chore-awards">
                                     <span class="earnings-badge">${readOnly && ['missed', 'expired'].includes(chore.status) ? 'No award' : `${readOnly ? chore.status === 'pending' ? 'If approved: ' : 'Earned: ' : ''}+${chore.points} XP · +${chore.coins} Coins`}</span>
-                                    ${chore.penalty > 0 ? `<span class="penalty-badge">Nominal ${chore.penalty} · max ${maxPenalty(chore)} Coins; actual ≤ day earnings/balance</span>` : ''}
                                 </div>
                             </div>
                         </div>
+                        <details class="chore-details">
+                            <summary aria-label="Details for ${escapeHTML(chore.title)}">Task details</summary>
+                            <p>${chore.mandatory ? 'Required' : 'Optional'} · ${needsReview(chore) ? 'Parent review required' : 'No parent review required'}.</p>
+                            ${chore.penalty > 0 ? `<p>Nominal penalty: ${chore.penalty} Coins; maximum potential loss: ${maxPenalty(chore)} Coins. Actual loss is also limited by the balance and that day's earnings after previous penalties.</p>` : '<p>No Coin penalty.</p>'}
+                            ${!chore.mandatory && (chore.daily || chore.archivedDaily || chore.cadence === 'weekly') ? '<p>Unsubmitted optional chores expire without a penalty.</p>' : ''}
+                        </details>
                         ${parentExtras}
                     </div>
                     <div>
@@ -495,6 +510,7 @@
                 `;
                 container.appendChild(card);
             });
+            addWeeklyChoices();
             if (tab === 'active' && !filtered.some(c => c.status === 'pending')) {
                 container.insertAdjacentHTML('beforeend', '<p class="review-empty-text">Parent review: nothing waiting.</p>');
             }
@@ -514,18 +530,19 @@
         function renderChoreChoices() {
             const container = document.getElementById('catalog-choices');
             container.innerHTML = '';
+            const weeklyContainer = document.getElementById('weekly-catalog-choices');
             if (!appState.activeKidId) return;
             catalog.chores.filter(t => !t.bonus).sort((a, b) => Number(childCanChoose(b)) - Number(childCanChoose(a))).forEach(template => {
                 const existing = templateDuplicate(template, appState.activeKidId, today(), true);
                 const selectable = childCanChoose(template);
                 const blockedReading = readingBlocked({...template, assignedTo: appState.activeKidId, day: today()});
                 const owner = existing && appState.kids.find(k => k.id === existing.assignedTo);
-                const status = existing ? `${owner?.id !== appState.activeKidId ? `Assigned to ${owner?.name || 'another child'}` : existing.status === 'active' ? 'Already assigned to you · see above' : existing.status === 'pending' ? 'Waiting for parent review' : 'Already recorded for this period'}.`
-                    : blockedReading ? 'You already chose reading today.' : selectable ? 'Available for you to choose.' : 'Ask parent to assign this first. No Coins or XP until completed.';
-                const frequency = template.cadence === 'weekly' ? 'Once per Mon–Sun week; repeats weekly until a parent removes it.' : template.cadence === 'daily' ? 'Once a day; repeats daily until a parent removes it.' : selectable ? 'One choice per day; finish any previous choice first.' : template.scheduled ? 'Parent schedules each session.' : 'Parent assigns each job.';
+                const status = existing ? owner?.id !== appState.activeKidId ? `Assigned to ${owner?.name || 'another child'}` : existing.status === 'active' ? 'Already assigned to you' : existing.status === 'pending' ? 'Waiting for parent review' : 'Already recorded for this period'
+                    : blockedReading ? 'Reading already chosen today' : '';
+                const frequency = template.cadence === 'weekly' ? 'Repeats until removed' : template.cadence === 'daily' ? 'Daily · repeats until removed' : selectable ? 'One choice per day' : template.scheduled ? 'Parent schedules' : 'Parent assigns';
                 const card = document.createElement('article');
                 card.className = 'catalog-choice';
-                card.innerHTML = `<h4 class="choice-title">${escapeHTML(template.emoji)} ${escapeHTML(template.title)}</h4><p class="success-text">${template.coins} Coins · ${template.points} lifetime XP</p><p class="detail-text">${escapeHTML(frequency)}</p><p class="help-text">${escapeHTML(status)}</p>`;
+                card.innerHTML = `<div class="choice-details"><div class="chore-title-row"><h4 class="choice-title">${escapeHTML(template.emoji)} ${escapeHTML(template.title)}</h4>${template.cadence === 'weekly' ? '<span class="weekly-badge">Weekly</span>' : ''}</div><p class="choice-meta">${template.coins} Coins · ${template.points} XP · ${escapeHTML(frequency)}</p>${status ? `<p class="choice-status">${escapeHTML(status)}</p>` : ''}</div>`;
                 if (!existing && !blockedReading) {
                     const button = document.createElement('button');
                     button.className = 'choose-chore-button';
@@ -533,7 +550,7 @@
                     button.onclick = () => chooseCatalogChore(template.id);
                     card.appendChild(button);
                 }
-                container.appendChild(card);
+                (template.cadence === 'weekly' && weeklyContainer ? weeklyContainer : container).appendChild(card);
             });
         }
 
