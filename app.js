@@ -27,6 +27,8 @@
         let refreshInProgress = false;
         let skipPin = false;
         let pinContext = null;
+        // View-only admin section; never included in saved family data.
+        let adminSection = 'tasks';
         // View-only filters; never included in saved family data.
         let taskBoardFilters = {
             player: 'all',
@@ -57,7 +59,8 @@
             return localDay(date);
         }
         const needsReview = chore => chore.requiresReview || chore.points >= 75 || chore.coins >= 75 || chore.bonus === 'reading';
-        const maxPenalty = chore => Math.min(chore.penalty, Math.floor(chore.coins / 2));
+        const nominalPenalty = chore => chore.penalty ?? (chore.mandatory ? Math.floor(chore.coins / 2) : 0);
+        const maxPenalty = chore => Math.min(nominalPenalty(chore), Math.floor(chore.coins / 2));
         const isRecurring = chore => chore.daily || (chore.cadence === 'weekly' && !chore.archived && !chore.bonus);
         function requireValue(condition, message) {
             if (!condition) throw new Error(message);
@@ -170,11 +173,16 @@
                 const response = await fetch('data/catalog.json', {cache: 'no-store'});
                 requireValue(response.ok, `Catalog HTTP ${response.status}`);
                 catalog = await response.json();
+                // Catalog groups chores by cadence; flatten for the single template list used everywhere.
+                const choreCadences = ['daily', 'weekly', 'on-demand'];
+                requireValue(catalog.chores && choreCadences.every(cadence => Array.isArray(catalog.chores[cadence])) &&
+                    Object.keys(catalog.chores).length === choreCadences.length, 'Invalid catalog chore groups');
+                catalog = {...catalog, chores: choreCadences.flatMap(cadence => catalog.chores[cadence].map(c => ({...c, cadence})))};
                 defaultKids = catalog.kids;
                 // Validate defaults even when the saved family has a custom catalog.
                 checkRows(catalog.chores, 'templates');
                 checkRows(defaultKids, 'starter players');
-                catalog.chores.forEach(c => requireValue(typeof c.title === 'string' && typeof c.emoji === 'string' && validAmount(c.points) && validAmount(c.coins) && validAmount(c.penalty) && ['daily','weekly','on-demand'].includes(c.cadence) && ['shared','personal'].includes(c.ownership) && typeof c.mandatory === 'boolean' && typeof c.requiresReview === 'boolean' && (!c.bonus || (c.bonus === 'reading' && Number.isInteger(c.requiredDays) && c.requiredDays >= 1 && c.requiredDays <= 7)), 'Invalid catalog template'));
+                catalog.chores.forEach(c => requireValue(typeof c.title === 'string' && typeof c.emoji === 'string' && validAmount(c.points) && validAmount(c.coins) && (c.penalty === undefined || validAmount(c.penalty)) && ['daily','weekly','on-demand'].includes(c.cadence) && ['shared','personal'].includes(c.ownership) && typeof c.mandatory === 'boolean' && typeof c.requiresReview === 'boolean' && (!c.bonus || (c.bonus === 'reading' && Number.isInteger(c.requiredDays) && c.requiredDays >= 1 && c.requiredDays <= 7)), 'Invalid catalog template'));
                 catalog.chores.filter(c => c.seed && c.ownership === 'shared').forEach(c => requireValue(defaultKids.some(k => k.id === c.defaultOwner), 'Unknown shared seed owner'));
                 validateData({kids: defaultKids, chores: seedChores(), rewards: catalog.rewards, redemptions: [], parentPin: '1396'});
                 const saved = await readServerState();
@@ -203,6 +211,7 @@
 
         function templateQuest(template, kidId, date = today()) {
             return {...template, id: `c_${newId()}`, templateId: template.id, assignedTo: kidId,
+                penalty: nominalPenalty(template),
                 day: date, period: template.cadence === 'weekly' ? weekStart(date) : date,
                 status: 'active', daily: template.cadence === 'daily', archived: false};
         }
@@ -243,11 +252,19 @@
             storageFailed = true;
             appState.isParentMode = false;
             document.querySelectorAll('[id^="modal-"]').forEach(modal => modal.classList.add('hidden'));
+            resolveDialog(null);
             document.getElementById('toast').classList.add('hidden');
             const app = document.getElementById('app');
             app.inert = false;
             app.textContent = `${message} This page is blocked. Recent changes may not have been saved; the server may have received a request even if its reply failed. Check the PHP service and reload to read server state. No browser-only fallback or automatic overwrite is used.`;
-            window.alert(app.textContent);
+            openDialog({
+                title: 'Storage unavailable',
+                message: app.textContent,
+                confirmLabel: 'Reload page',
+                cancelLabel: null,
+                icon: 'wifi-off',
+                danger: true
+            }).then(() => window.location.reload());
         }
 
         function saveToStorage() {
@@ -592,6 +609,7 @@
 
         function openRequestedTemplate() {
             if (!appState.isParentMode || !requestedTemplateId) return;
+            adminSection = 'assign';
             document.getElementById('template-choice').value = requestedTemplateId;
             document.getElementById('template-player').value = appState.activeKidId || '';
             requestedTemplateId = null;
@@ -644,7 +662,7 @@
             const selectedKid = appState.kids.find(k => k.id === appState.activeKidId);
             document.getElementById('parent-scope').textContent = selectedKid
                 ? `Selected child: ${selectedKid.name}. Review pending assignments for all active players below; Chore Review shows only this child. Reward requests show all children. Log out to return to the profile chooser and lock parent controls.`
-                : 'Parent Admin mode active. Review all squad chores, player balances, and vault rewards below.';
+                : '';
             const links = document.getElementById('parent-review-links');
             links.innerHTML = '';
             if (selectedKid) {
@@ -655,11 +673,7 @@
                 button.onclick = () => { switchMainView('chores'); setTaskTab('pending'); };
                 links.appendChild(button);
             }
-            const rewardsButton = document.createElement('button');
-            rewardsButton.className = 'review-link';
-            rewardsButton.textContent = 'All reward requests & vault';
-            rewardsButton.onclick = () => switchMainView('shop');
-            links.appendChild(rewardsButton);
+            links.classList.toggle('hidden', !links.children.length);
 
             // Assignments and pending reviews for every active player, independent of child selection.
             const squadContainer = document.getElementById('parent-squad-overview');
@@ -938,20 +952,48 @@
             renderTaskBoard();
         }
 
+        // Admin section switcher
+        const ADMIN_SECTIONS = ['tasks', 'cards', 'players', 'catalog', 'assign', 'admin'];
+        function switchAdminSection(section) {
+            if (!appState.isParentMode || !ADMIN_SECTIONS.includes(section)) return;
+            adminSection = section;
+            if (appState.activeView !== 'parent') switchMainView('parent');
+            applyAdminSection();
+            const content = document.querySelector('.app-content');
+            if (content) content.scrollTop = 0;
+        }
+        function applyAdminSection() {
+            document.querySelectorAll('#view-parent [data-section]').forEach(el => {
+                el.classList.toggle('hidden', el.dataset.section !== adminSection);
+            });
+            const inAdminSection = appState.isParentMode && appState.activeView === 'parent';
+            ADMIN_SECTIONS.forEach(section => {
+                const btn = document.getElementById(`admin-nav-${section}`);
+                if (!btn) return;
+                btn.classList.toggle('is-active', inAdminSection && section === adminSection);
+                if (inAdminSection && section === adminSection) btn.setAttribute('aria-current', 'page');
+                else btn.removeAttribute('aria-current');
+            });
+            const rewardsBtn = document.getElementById('admin-nav-rewards');
+            if (rewardsBtn) {
+                const active = appState.isParentMode && appState.activeView === 'shop';
+                rewardsBtn.classList.toggle('is-active', active);
+                if (active) rewardsBtn.setAttribute('aria-current', 'page');
+                else rewardsBtn.removeAttribute('aria-current');
+            }
+        }
+
         // Navigation state
         function updateNavigation() {
-            const parentNavBtn = document.getElementById('nav-parent');
             const appShell = document.getElementById('app');
             if (appState.isParentMode) {
-                parentNavBtn.classList.remove('hidden');
                 if (appShell) appShell.classList.add('is-admin-mode');
             } else {
-                parentNavBtn.classList.add('hidden');
                 if (appShell) appShell.classList.remove('is-admin-mode');
                 if (appState.activeView === 'parent') appState.activeView = 'chores';
             }
 
-            ['chores', 'shop', 'profile', 'parent'].forEach(v => {
+            ['chores', 'shop', 'profile'].forEach(v => {
                 const btn = document.getElementById(`nav-${v}`);
                 if (btn) {
                     if (v === appState.activeView) {
@@ -963,7 +1005,6 @@
                     else btn.removeAttribute('aria-current');
                 }
             });
-            parentNavBtn.classList.toggle('hidden', !appState.isParentMode);
             const hasKid = appState.kids.some(k => k.id === appState.activeKidId);
             document.getElementById('main-nav').classList.toggle('hidden', !hasKid && !appState.isParentMode);
             document.getElementById('nav-chores').classList.toggle('hidden', !hasKid);
@@ -973,6 +1014,12 @@
                 const visible = v === appState.activeView && (v === 'parent' ? appState.isParentMode : hasKid || (v === 'shop' && appState.isParentMode));
                 document.getElementById(`view-${v}`).classList.toggle('hidden', !visible);
             });
+            // Admin keeps one bottom bar with every function, including Rewards.
+            const adminNav = document.getElementById('admin-nav');
+            const viewsNav = document.getElementById('nav-row-views');
+            if (adminNav) adminNav.classList.toggle('hidden', !appState.isParentMode);
+            if (viewsNav) viewsNav.classList.toggle('hidden', appState.isParentMode);
+            applyAdminSection();
         }
 
         // --- HANDLERS ---
@@ -1037,7 +1084,7 @@
         function renderTemplateDetails() {
             const template = catalog.chores.find(c => c.id === document.getElementById('template-choice').value);
             if (!template) return;
-            document.getElementById('template-details').textContent = `${template.points} lifetime XP / ${template.coins} Coins · ${template.ownership} · ${template.scheduled ? 'scheduled session' : template.cadence} · ${needsReview(template) ? 'Parent review required' : 'No parent review required'} · nominal penalty ${template.penalty}, applied max ${maxPenalty(template)} (also bounded by original-day earnings and balance). ${template.bonus ? 'Automatically queued for parent confirmation after five distinct reading days; not manually assignable.' : template.ownership === 'shared' ? 'ONE player per household job. Daily/weekly assignment repeats for this player until deleted.' : 'Assign separately to each player who needs it. Daily/weekly assignment repeats until deleted.'}`;
+            document.getElementById('template-details').textContent = `${template.points} lifetime XP / ${template.coins} Coins · ${template.ownership} · ${template.scheduled ? 'scheduled session' : template.cadence} · ${needsReview(template) ? 'Parent review required' : 'No parent review required'} · nominal penalty ${nominalPenalty(template)}, applied max ${maxPenalty(template)} (also bounded by original-day earnings and balance). ${template.bonus ? 'Automatically queued for parent confirmation after five distinct reading days; not manually assignable.' : template.ownership === 'shared' ? 'ONE player per household job. Daily/weekly assignment repeats for this player until deleted.' : 'Assign separately to each player who needs it. Daily/weekly assignment repeats until deleted.'}`;
             document.getElementById('template-date-field').classList.toggle('hidden', !template.scheduled);
             document.getElementById('template-date').disabled = !template.scheduled;
             document.getElementById('template-deploy').disabled = !!template.bonus;
@@ -1059,8 +1106,15 @@
             showToast('Selected task assigned to one player.', 'crosshair');
         }
 
-        function importDefaultRewards() {
-            if (!appState.isParentMode || !window.confirm('Add missing source-catalog rewards? Existing prices, custom rewards and request snapshots will not change. This explicitly restores deleted defaults too.')) return;
+        async function importDefaultRewards() {
+            if (!appState.isParentMode) return;
+            const confirmed = await askConfirm({
+                title: 'Restore default rewards?',
+                message: 'Add missing source-catalog rewards? Existing prices, custom rewards and request snapshots will not change. This explicitly restores deleted defaults too.',
+                confirmLabel: 'Add missing rewards',
+                icon: 'gift'
+            });
+            if (!confirmed) return;
             catalog.rewards.forEach(r => {
                 if (!appState.rewards.some(saved => saved.id === r.id || saved.title === r.title)) appState.rewards.push({...r});
             });
@@ -1179,6 +1233,7 @@
             if (storageFailed || prototypeResetInProgress) return;
             appState.activeKidId = null;
             appState.isParentMode = false;
+            adminSection = 'tasks';
             requestedTemplateId = null;
             ['modal-chore','modal-kid','modal-reward','modal-pin','modal-assignment'].forEach(closeModal);
             appState.activeView = 'chores';
@@ -1250,15 +1305,15 @@
             grantChore(chore);
         }
 
-        function rejectChore(choreId) {
+        async function rejectChore(choreId) {
             if (storageFailed || prototypeResetInProgress || !appState.isParentMode) return;
             const chore = appState.chores.find(c => c.id === choreId);
             if (!chore || !activePlayer(chore.assignedTo) || chore.status !== 'pending') return;
-            failChore(choreId);
+            await failChore(choreId);
         }
 
         // Fail Quest / Apply Penalty
-        function failChore(choreId) {
+        async function failChore(choreId) {
             if (storageFailed || prototypeResetInProgress || !appState.isParentMode) return;
             const rolled = rollDailyQuests();
             const chore = appState.chores.find(c => c.id === choreId);
@@ -1271,9 +1326,17 @@
             }
             const kid = activePlayer(chore.assignedTo);
             if (chore.bonus && kid.readingBonuses?.[chore.period] !== 'pending') return;
-            if (!window.confirm(chore.bonus
-                ? `Decline ${chore.title} for ${kid.name} (week of ${chore.period})? No award is granted. This weekly decision is retained and cannot be claimed again.`
-                : `Mark ${chore.title} missed for ${kid.name} on ${chore.day}? No award is granted. The Coin loss is at most ${maxPenalty(chore)} (nominal ${chore.penalty}), bounded by original-day earnings and balance. XP is safe.`)) return;
+            const confirmed = await askConfirm({
+                title: chore.bonus ? 'Decline weekly bonus?' : 'Mark task missed?',
+                message: chore.bonus
+                    ? `${chore.title} for ${kid.name} (week of ${chore.period}). No award is granted. This weekly decision is retained and cannot be claimed again.`
+                    : `${chore.title} for ${kid.name} on ${chore.day}. No award is granted. The Coin loss is at most ${maxPenalty(chore)} (nominal ${chore.penalty}), bounded by original-day earnings and balance. XP is safe.`,
+                confirmLabel: chore.bonus ? 'Decline bonus' : 'Mark missed',
+                icon: chore.bonus ? 'shield-x' : 'alert-triangle',
+                danger: true
+            });
+            if (!confirmed) return;
+            if (appState.chores.find(c => c.id === choreId) !== chore || !['active', 'pending'].includes(chore.status)) return;
             const loss = applyMiss(chore);
 
             saveToStorage();
@@ -1348,6 +1411,7 @@
         function toggleParentMode() {
             if (appState.isParentMode) {
                 appState.isParentMode = false;
+                adminSection = 'tasks';
                 requestedTemplateId = null;
                 appState.activeView = 'chores';
                 switchMainView('chores');
@@ -1377,6 +1441,7 @@
         function unlockParent() {
             if (storageFailed) return;
             appState.isParentMode = true;
+            adminSection = 'tasks';
             closeModal('modal-pin');
             document.getElementById('mode-btn-text').textContent = 'Exit Admin';
             document.getElementById('mode-subtitle').textContent = 'Parent Admin Mode';
@@ -1438,7 +1503,104 @@
                 document.getElementById('pin-input').value = '';
                 if (!appState.isParentMode) requestedTemplateId = null;
             }
+            if (id === 'modal-dialog') resolveDialog(dialogResult);
             if (wasOpen && modalReturnFocus?.isConnected) modalReturnFocus.focus();
+        }
+
+        // --- IN-APP DIALOGS ---
+        // Promise-based replacements for window.alert/confirm/prompt so every
+        // interaction uses the app's own panel, styling and keyboard handling.
+        let dialogResolve = null;
+        let dialogResult = null;
+        let dialogInput = null;
+
+        function openDialog({title = 'Confirm', message = '', confirmLabel = 'Confirm', cancelLabel = 'Cancel', icon = 'shield-check', danger = false, input = null}) {
+            resolveDialog(null);
+            dialogResult = null;
+            dialogInput = input;
+            const panel = document.querySelector('#modal-dialog .dialog-panel');
+            panel.classList.toggle('is-danger', danger);
+            document.getElementById('dialog-title').textContent = title;
+            document.getElementById('dialog-message').textContent = message;
+            document.getElementById('dialog-icon').setAttribute('data-lucide', icon);
+            document.getElementById('dialog-confirm').textContent = confirmLabel;
+            const cancel = document.getElementById('dialog-cancel');
+            cancel.textContent = cancelLabel;
+            cancel.classList.toggle('hidden', cancelLabel === null);
+            const inputEl = document.getElementById('dialog-input');
+            document.getElementById('dialog-field').classList.toggle('hidden', !input);
+            document.getElementById('dialog-field-label').textContent = input?.label || '';
+            inputEl.value = input?.value || '';
+            inputEl.placeholder = input?.placeholder || '';
+            if (input?.maxLength) inputEl.setAttribute('maxlength', input.maxLength);
+            else inputEl.removeAttribute('maxlength');
+            const error = document.getElementById('dialog-error');
+            error.textContent = '';
+            error.classList.add('hidden');
+            lucide.createIcons();
+            return new Promise(resolve => {
+                dialogResolve = resolve;
+                openModal('modal-dialog');
+                if (input) {
+                    inputEl.focus();
+                    inputEl.select();
+                } else {
+                    document.getElementById(danger && cancelLabel !== null ? 'dialog-cancel' : 'dialog-confirm').focus();
+                }
+            });
+        }
+
+        function resolveDialog(result) {
+            const resolve = dialogResolve;
+            dialogResolve = null;
+            dialogInput = null;
+            if (resolve) resolve(result);
+        }
+
+        function closeDialog(result = null) {
+            dialogResult = result;
+            closeModal('modal-dialog');
+            dialogResult = null;
+        }
+
+        function confirmDialogAction() {
+            if (!dialogResolve) return;
+            if (!dialogInput) return closeDialog(true);
+            const inputEl = document.getElementById('dialog-input');
+            const value = inputEl.value.trim();
+            const failure = !value
+                ? (dialogInput.emptyError || 'Enter a value to continue.')
+                : dialogInput.match && value !== dialogInput.match
+                    ? (dialogInput.matchError || `Type ${dialogInput.match} exactly to continue.`)
+                    : '';
+            if (failure) {
+                const error = document.getElementById('dialog-error');
+                error.textContent = failure;
+                error.classList.remove('hidden');
+                inputEl.focus();
+                inputEl.select();
+                return;
+            }
+            closeDialog(value);
+        }
+
+        function handleDialogKey(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                confirmDialogAction();
+            }
+        }
+
+        function askConfirm(options) {
+            return openDialog(options).then(result => result !== null);
+        }
+
+        function askText(options) {
+            return openDialog({...options, input: options.input || {}});
+        }
+
+        function showHelp(title, message) {
+            openDialog({title, message, confirmLabel: 'Got it', cancelLabel: null, icon: 'help-circle'});
         }
 
         function handleModalKey(event) {
@@ -1526,7 +1688,14 @@
             if (!assignmentEditable(chore)) return;
             const ownerId = chore.assignedTo;
             const owner = activePlayer(ownerId);
-            if (!window.confirm(`Remove “${chore.title}” from ${owner.name}? ${isRecurring(chore) ? 'This stops future daily/weekly recurrence. ' : ''}No XP, Coins, miss or penalty is applied. Past results and pending reviews are kept.`)) return;
+            const confirmed = await askConfirm({
+                title: `Remove “${chore.title}”?`,
+                message: `Remove this task from ${owner.name}? ${isRecurring(chore) ? 'This stops future daily/weekly recurrence. ' : ''}No XP, Coins, miss or penalty is applied. Past results and pending reviews are kept.`,
+                confirmLabel: 'Remove task',
+                icon: 'trash-2',
+                danger: true
+            });
+            if (!confirmed) return;
             if (appState.chores.find(c => c.id === id) !== chore || chore.assignedTo !== ownerId || !assignmentEditable(chore)) return;
             releaseAssignmentDay(chore);
             appState.chores = appState.chores.filter(c => c.id !== id);
@@ -1617,23 +1786,41 @@
             renderApp();
         }
 
-        function renameKid(id) {
+        async function renameKid(id) {
             if (!appState.isParentMode) return;
             const kid = appState.kids.find(k => k.id === id);
             if (!kid) return;
-            const name = window.prompt(`Rename ${kid.name}. Balances and history stay with this profile.`, kid.name);
+            const name = await askText({
+                title: `Rename ${kid.name}`,
+                message: 'Balances and history stay with this profile.',
+                input: {label: 'Player name', value: kid.name, maxLength: 40, emptyError: 'Enter a name from 1–40 characters.'},
+                confirmLabel: 'Save name',
+                icon: 'pencil'
+            });
             if (name === null) return;
             if (!name.trim() || name.trim().length > 40) return showToast('Enter a name from 1–40 characters.', 'alert-circle');
-            kid.name = name.trim();
+            const current = appState.kids.find(k => k.id === id);
+            if (!current) return;
+            current.name = name.trim();
             saveToStorage();
             renderApp();
         }
 
-        function archiveKid(id) {
+        async function archiveKid(id) {
             if (!appState.isParentMode) return;
             const kid = activePlayer(id);
-            if (!kid || !window.confirm(`Archive ${kid.name}? No data is removed: XP, Coins, chores, history and reward requests are kept. This player will be hidden and all chores paused: no earnings, automatic misses or penalties while archived. Parent can restore them here, even if no active players remain.`)) return;
-            kid.archived = true;
+            if (!kid) return;
+            const confirmed = await askConfirm({
+                title: `Archive ${kid.name}?`,
+                message: 'No data is removed: XP, Coins, chores, history and reward requests are kept. This player will be hidden and all chores paused: no earnings, automatic misses or penalties while archived. Parent can restore them here, even if no active players remain.',
+                confirmLabel: 'Archive player',
+                icon: 'archive',
+                danger: true
+            });
+            if (!confirmed) return;
+            const current = activePlayer(id);
+            if (!current) return;
+            current.archived = true;
             if (appState.activeKidId === id) appState.activeKidId = null;
             requestedTemplateId = null;
             appState.activeView = 'parent';
@@ -1641,10 +1828,19 @@
             renderApp();
         }
 
-        function restoreKid(id) {
+        async function restoreKid(id) {
             if (!appState.isParentMode) return;
             const kid = appState.kids.find(k => k.id === id && k.archived);
-            if (!kid || !window.confirm(`Restore ${kid.name}? Daily/weekly chores resume in the current period without catch-up penalties or awards. Past scheduled sessions expire without loss. Pending reviews keep their original dates. Shared jobs assigned elsewhere may need parent resolution. No child is selected automatically.`)) return;
+            if (!kid) return;
+            const confirmed = await askConfirm({
+                title: `Restore ${kid.name}?`,
+                message: 'Daily/weekly chores resume in the current period without catch-up penalties or awards. Past scheduled sessions expire without loss. Pending reviews keep their original dates. Shared jobs assigned elsewhere may need parent resolution. No child is selected automatically.',
+                confirmLabel: 'Restore player',
+                icon: 'archive-restore'
+            });
+            if (!confirmed) return;
+            const current = appState.kids.find(k => k.id === id && k.archived);
+            if (!current) return;
             const date = today();
             const resumed = [];
             appState.chores.filter(c => c.assignedTo === id).forEach(chore => {
@@ -1658,14 +1854,21 @@
                 } else if (chore.scheduled && chore.status === 'active' && chore.day < date) chore.status = 'expired';
             });
             appState.chores.push(...resumed);
-            kid.archived = false;
+            current.archived = false;
             saveToStorage();
             renderApp();
         }
 
         async function resetPrototypeData() {
             if (!appState.isParentMode || prototypeResetInProgress || storageFailed) return;
-            const answer = window.prompt('IRREVERSIBLE: reset the server family for ALL devices using this PHP service? This removes every active/archived profile, XP, Coins, chores, rewards/custom catalog copies, history, requests and saved PIN. Reload starts from data/catalog.json (Alex/Chris and current defaults), restoring the default PIN. Old browser data is ignored and left untouched. Type RESET to continue.');
+            const answer = await askText({
+                title: 'Reset prototype data?',
+                message: 'IRREVERSIBLE: reset the server family for ALL devices using this PHP service? This removes every active/archived profile, XP, Coins, chores, rewards/custom catalog copies, history, requests and saved PIN. Reload starts from data/catalog.json (Alex/Chris and current defaults), restoring the default PIN. Old browser data is ignored and left untouched.',
+                input: {label: 'Type RESET to confirm', placeholder: 'RESET', match: 'RESET', emptyError: 'Type RESET to confirm the reset.', matchError: 'Type RESET exactly to confirm the reset.'},
+                confirmLabel: 'Reset everything',
+                icon: 'alert-octagon',
+                danger: true
+            });
             if (answer !== 'RESET') return;
             prototypeResetInProgress = true;
             document.getElementById('app').inert = true;

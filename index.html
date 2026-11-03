@@ -76,7 +76,7 @@
 
                 <div class="section-heading">
                     <h2 id="hero-name" tabindex="-1" class="section-title">Today</h2>
-                    <button onclick="alert('How to play:\n• Complete your assigned chores today.\n• Tap “I did it” when finished.\n• Use Coins in the Rewards shop to redeem loot!')" class="chore-help-button" aria-label="How to play">?</button>
+                    <button onclick="showHelp('How to play', '• Complete your assigned chores today.\n• Tap “I did it” when finished.\n• Use Coins in the Rewards shop to redeem loot!')" class="chore-help-button" aria-label="How to play">?</button>
                 </div>
 
                 <!-- Chores Quest List Container -->
@@ -86,7 +86,7 @@
                 <section id="chore-choices" class="chore-choices" aria-labelledby="choices-heading">
                     <div class="flex justify-between items-center">
                         <h3 id="choices-heading" class="section-title">Extra Chores</h3>
-                        <button onclick="alert('Choose a personal chore to complete for extra XP and Coins. Household chores are assigned by parents.')" class="w-6 h-6 bg-slate-800 text-slate-300 rounded-full border border-slate-700 flex items-center justify-center font-bold text-xs shrink-0 hover:bg-slate-700 hover:text-white" title="Help">?</button>
+                        <button onclick="showHelp('Extra chores', 'Choose a personal chore to complete for extra XP and Coins. Household chores are assigned by parents.')" class="w-6 h-6 bg-slate-800 text-slate-300 rounded-full border border-slate-700 flex items-center justify-center font-bold text-xs shrink-0 hover:bg-slate-700 hover:text-white" title="Help">?</button>
                     </div>
                     <div id="catalog-choices" class="catalog-choices"></div>
                 </section>
@@ -127,7 +127,7 @@
                     <div>
                         <h2 class="shop-title flex items-center gap-2">
                             <i data-lucide="shopping-cart" class="shop-icon"></i> Gamer Loot Vault
-                            <button onclick="alert('Spend your earned Coins on rewards and perks. Requests reserve your Coins until a parent fulfills or refunds them.')" class="w-5 h-5 bg-slate-800 text-slate-300 rounded-full border border-slate-700 inline-flex items-center justify-center font-bold text-[10px] hover:bg-slate-700 hover:text-white" title="Help">?</button>
+                            <button onclick="showHelp('Gamer loot vault', 'Spend your earned Coins on rewards and perks. Requests reserve your Coins until a parent fulfills or refunds them.')" class="w-5 h-5 bg-slate-800 text-slate-300 rounded-full border border-slate-700 inline-flex items-center justify-center font-bold text-[10px] hover:bg-slate-700 hover:text-white" title="Help">?</button>
                         </h2>
                         <p class="shop-subtitle">Spend Coins, keep your lifetime XP.</p>
                     </div>
@@ -154,7 +154,13 @@
                 <div id="parent-review-links" class="review-links"></div>
 
                 <!-- Master Overview Tabs / Sections -->
-                <div class="admin-panel">
+                <div class="admin-panel" data-section="tasks">
+                    <h2 class="panel-title" id="task-board-heading">All Tasks</h2>
+                    <p class="help-text">Filter assignments and history for every player, including archived players. Awards show task values; penalties show nominal amounts and recorded losses.</p>
+                    <div id="task-board" class="task-board"></div>
+                </div>
+
+                <div class="admin-panel" data-section="cards">
                     <h3 id="assignments-heading" tabindex="-1" class="panel-title">
                         <i data-lucide="list-checks" class="panel-icon"></i> Assignments by Player
                     </h3>
@@ -164,14 +170,8 @@
                     </div>
                 </div>
 
-                <div class="admin-panel">
-                    <h2 class="panel-title" id="task-board-heading">All Tasks</h2>
-                    <p class="help-text">Filter assignments and history for every player, including archived players. Awards show task values; penalties show nominal amounts and recorded losses.</p>
-                    <div id="task-board" class="task-board"></div>
-                </div>
-
                 <!-- Manage Players -->
-                <div class="admin-panel">
+                <div class="admin-panel" data-section="players">
                     <div class="section-heading">
                         <h3 class="panel-title">
                             <i data-lucide="users" class="panel-icon"></i> Manage Players (SQUAD)
@@ -187,7 +187,7 @@
                 </div>
 
                 <!-- Master Catalog & Rewards Listing -->
-                <div class="admin-panel">
+                <div class="admin-panel" data-section="catalog">
                     <h3 class="panel-title">
                         <i data-lucide="book-open" class="catalog-panel-icon"></i> Master Chore Templates &amp; Rewards Catalog
                     </h3>
@@ -205,7 +205,7 @@
                 </div>
 
                 <!-- Quick Actions for Tasks & Loot -->
-                <div class="quick-actions">
+                <div class="quick-actions" data-section="assign">
                     <button onclick="openAddChoreModal()" class="quick-action quick-action-chore">
                         <div class="quick-action-badge">
                             <i data-lucide="plus-circle" class="nav-icon"></i>
@@ -223,7 +223,7 @@
                     </button>
                 </div>
 
-                <div class="template-panel">
+                <div class="template-panel" data-section="assign">
                     <h3 class="panel-title">Source Catalog → Assign Task</h3>
                     <p class="muted-text">Assign tasks to players. Shared chores pay ONE named player. Weekly tasks repeat Mon–Sun.</p>
                     <form onsubmit="deployTemplate(event)" class="app-form">
@@ -241,14 +241,14 @@
                     <button onclick="importDefaultRewards()" class="import-rewards-button">Add missing default rewards (confirm first)</button>
                 </div>
 
-                <section class="reset-panel" aria-labelledby="reset-heading">
+                <section class="reset-panel" data-section="admin" aria-labelledby="reset-heading">
                     <h3 id="reset-heading" class="choice-title">Prototype data</h3>
                     <p class="detail-text">data/catalog.json supplies first-run defaults; the PHP service saves one shared family for all devices using this server. Reset irreversibly removes ALL profiles (including archived), balances, custom tasks/rewards, history, requests and saved PIN for ALL those devices. Type RESET to confirm. Reload starts with Alex/Chris and current catalog defaults, restoring the default PIN. Old browser data is ignored and left untouched.</p>
                     <button onclick="resetPrototypeData()" class="reset-button">Reset prototype data</button>
                     <p class="muted-text">Irreversible. You must type RESET in the confirmation to proceed.</p>
                 </section>
 
-                <div class="pin-notice">
+                <div class="pin-notice" data-section="admin">
                     <i data-lucide="lock" class="pin-notice-icon"></i>
                     <span>Tap "Exit Admin" to lock parent controls.</span>
                 </div>
@@ -258,22 +258,50 @@
 
         <!-- BOTTOM NAVIGATION BAR -->
         <nav id="main-nav" aria-label="Main navigation" class="main-nav hidden">
-            <button onclick="switchMainView('chores')" id="nav-chores" class="nav-button is-active">
-                <i data-lucide="sword" class="nav-icon"></i>
-                <span class="nav-label">My chores</span>
-            </button>
-            <button onclick="switchMainView('shop')" id="nav-shop" class="nav-button">
-                <i data-lucide="shopping-bag" class="nav-icon"></i>
-                <span class="nav-label">Rewards</span>
-            </button>
-            <button onclick="switchMainView('profile')" id="nav-profile" class="nav-button">
-                <i data-lucide="user-round" class="nav-icon"></i>
-                <span class="nav-label">Profile</span>
-            </button>
-            <button onclick="switchMainView('parent')" id="nav-parent" class="nav-button hidden">
-                <i data-lucide="sliders" class="nav-icon"></i>
-                <span class="nav-label nav-admin-label">Admin</span>
-            </button>
+            <div id="admin-nav" class="nav-row admin-nav hidden" role="group" aria-label="Admin sections">
+                <button onclick="switchAdminSection('tasks')" id="admin-nav-tasks" class="nav-button">
+                    <i data-lucide="list-checks" class="nav-icon"></i>
+                    <span class="nav-label nav-section-label">Tasks</span>
+                </button>
+                <button onclick="switchAdminSection('cards')" id="admin-nav-cards" class="nav-button">
+                    <i data-lucide="layout-grid" class="nav-icon"></i>
+                    <span class="nav-label nav-section-label">Cards</span>
+                </button>
+                <button onclick="switchAdminSection('players')" id="admin-nav-players" class="nav-button">
+                    <i data-lucide="users" class="nav-icon"></i>
+                    <span class="nav-label nav-section-label">Players</span>
+                </button>
+                <button onclick="switchAdminSection('catalog')" id="admin-nav-catalog" class="nav-button">
+                    <i data-lucide="book-open" class="nav-icon"></i>
+                    <span class="nav-label nav-section-label">Catalog</span>
+                </button>
+                <button onclick="switchAdminSection('assign')" id="admin-nav-assign" class="nav-button">
+                    <i data-lucide="list-plus" class="nav-icon"></i>
+                    <span class="nav-label nav-section-label">Assign</span>
+                </button>
+                <button onclick="switchMainView('shop')" id="admin-nav-rewards" class="nav-button">
+                    <i data-lucide="shopping-bag" class="nav-icon"></i>
+                    <span class="nav-label nav-section-label">Rewards</span>
+                </button>
+                <button onclick="switchAdminSection('admin')" id="admin-nav-admin" class="nav-button">
+                    <i data-lucide="settings" class="nav-icon"></i>
+                    <span class="nav-label nav-section-label">Admin</span>
+                </button>
+            </div>
+            <div id="nav-row-views" class="nav-row">
+                <button onclick="switchMainView('chores')" id="nav-chores" class="nav-button is-active">
+                    <i data-lucide="sword" class="nav-icon"></i>
+                    <span class="nav-label">My chores</span>
+                </button>
+                <button onclick="switchMainView('shop')" id="nav-shop" class="nav-button">
+                    <i data-lucide="shopping-bag" class="nav-icon"></i>
+                    <span class="nav-label">Rewards</span>
+                </button>
+                <button onclick="switchMainView('profile')" id="nav-profile" class="nav-button">
+                    <i data-lucide="user-round" class="nav-icon"></i>
+                    <span class="nav-label">Profile</span>
+                </button>
+            </div>
         </nav>
 
     </div>
@@ -446,6 +474,28 @@
     <div id="toast" role="status" class="toast">
         <i data-lucide="info" id="toast-icon" class="toast-icon"></i>
         <span id="toast-msg">Quest Updated!</span>
+    </div>
+
+    <!-- In-app dialog: replaces browser alert, confirm and prompt -->
+    <div id="modal-dialog" class="modal dialog-modal hidden" role="dialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-message">
+        <div class="modal-panel dialog-panel">
+            <div class="dialog-emblem">
+                <i id="dialog-icon" data-lucide="shield-check" class="dialog-icon"></i>
+            </div>
+            <div class="dialog-copy">
+                <h3 id="dialog-title" class="dialog-title">Confirm</h3>
+                <p id="dialog-message" class="dialog-message"></p>
+            </div>
+            <label id="dialog-field" class="dialog-field hidden">
+                <span id="dialog-field-label" class="form-label">Value</span>
+                <input id="dialog-input" type="text" autocomplete="off" spellcheck="false" onkeydown="handleDialogKey(event)" class="form-input dialog-input">
+            </label>
+            <p id="dialog-error" role="alert" class="dialog-error hidden"></p>
+            <div class="dialog-actions">
+                <button type="button" id="dialog-cancel" onclick="closeDialog()" class="cancel-button">Cancel</button>
+                <button type="button" id="dialog-confirm" onclick="confirmDialogAction()" class="submit-button submit-dialog">Confirm</button>
+            </div>
+        </div>
     </div>
 
     <!-- JAVASCRIPT LOGIC -->

@@ -78,9 +78,12 @@
   Ask parent is an in-person PIN handoff, not a stored request: after unlock it
   opens the chosen template/child in Admin for deliberate deployment. Cancelling
   or logging out clears this handoff. Shared ownership is never self-claimed.
-- Templates have `points` (lifetime XP), `coins`, nominal `penalty`, `cadence`
-  (daily/weekly/on-demand), `ownership` (personal/shared), `mandatory`,
-  `requiresReview`, title and emoji. `seed` enables first-run daily deployment;
+- Templates live under `daily`, `weekly` and `on-demand` in `data/catalog.json`,
+  which supplies their `cadence`. Each has `points` (lifetime XP), `coins`,
+  `ownership` (personal/shared), `mandatory`, `requiresReview`, title and emoji.
+  Penalty is not stored for templates: it derives as half the Coin award (floor)
+  when mandatory and 0 otherwise; custom tasks keep an explicit nominal penalty.
+  `seed` enables first-run daily deployment;
   shared seeds have one `defaultOwner`. Training is on-demand with `scheduled`
   and a parent-chosen date. Weekly periods run Monday–Sunday in local time.
 - First run seeds only daily pet/household/tidying tasks and optional reading.

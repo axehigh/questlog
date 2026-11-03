@@ -377,12 +377,13 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 }
 
 /* Fixed navigation. */
-.main-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 28rem; margin-inline: auto; background: rgb(18 24 38 / .95); backdrop-filter: blur(12px); border-top: 1px solid var(--border); padding: .625rem 1.5rem; display: flex; justify-content: space-around; align-items: center; z-index: 20; }
+.main-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 28rem; margin-inline: auto; background: rgb(18 24 38 / .95); backdrop-filter: blur(12px); border-top: 1px solid var(--border); padding: .625rem 1rem; display: flex; flex-direction: column; gap: .5rem; justify-content: space-around; align-items: center; z-index: 20; }
+.nav-row { display: flex; width: 100%; justify-content: space-around; align-items: center; }
 .nav-button { display: flex; flex-direction: column; align-items: center; color: #64748b; font-weight: 700; }
 .nav-button:hover { color: var(--secondary); }
 .nav-button.is-active { color: var(--quest-red); }
 .nav-label { font-size: .75rem; line-height: 1rem; margin-top: .25rem; }
-.nav-admin-label { font-size: 10px; line-height: inherit; }
+.nav-section-label { font-size: .625rem; line-height: .875rem; margin-top: .125rem; }
 
 /* Modal forms and emoji selection. */
 .modal { position: fixed; inset: 0; background: rgb(0 0 0 / .8); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(12px); }
@@ -432,6 +433,25 @@ button:focus-visible, summary:focus-visible, input:focus-visible, select:focus-v
 .pin-actions { display: flex; gap: .5rem; }
 .pin-actions > button { padding-block: .5rem; }
 .submit-pin { box-shadow: var(--shadow-card); }
+
+/* In-app dialog (replaces browser alert/confirm/prompt). */
+.dialog-modal { background: rgb(0 0 0 / .88); z-index: 60; }
+.dialog-panel { max-width: 26rem; padding: 1.5rem; }
+.dialog-emblem { width: 3rem; height: 3rem; border-radius: 1rem; display: flex; align-items: center; justify-content: center; background: rgb(0 240 255 / .12); border: 1px solid rgb(0 240 255 / .35); color: var(--quest-cyan); }
+.dialog-panel.is-danger .dialog-emblem { background: rgb(255 70 85 / .12); border-color: rgb(255 70 85 / .4); color: var(--quest-red); }
+.dialog-icon { width: 1.5rem; height: 1.5rem; }
+.dialog-title { font-weight: 700; font-size: 1rem; line-height: 1.5rem; color: white; }
+.dialog-message { font-size: .8125rem; line-height: 1.25rem; color: var(--secondary); white-space: pre-line; }
+.dialog-field { display: block; }
+.dialog-input:focus { border-color: var(--quest-cyan); }
+.dialog-panel.is-danger .dialog-input:focus { border-color: var(--quest-red); }
+.dialog-error { font-size: .75rem; line-height: 1rem; font-weight: 700; color: #fca5a5; }
+.dialog-actions { display: flex; gap: .5rem; padding-top: .25rem; }
+.submit-dialog { background: var(--quest-cyan); color: #020617; }
+.submit-dialog:hover { background: #22d3ee; }
+.dialog-panel.is-danger .submit-dialog { background: var(--quest-red); color: white; }
+.dialog-panel.is-danger .submit-dialog:hover { background: #dc2626; }
+@media (max-width: 22rem) { .dialog-actions { flex-direction: column-reverse; } }
 
 /* Notifications and interaction states. */
 .toast {
