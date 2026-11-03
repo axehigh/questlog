@@ -27,6 +27,16 @@
         let refreshInProgress = false;
         let skipPin = false;
         let pinContext = null;
+        // View-only filters; never included in saved family data.
+        let taskBoardFilters = {
+            player: 'all',
+            cadence: 'all',
+            status: 'all',
+            ownership: 'all',
+            scope: 'current',
+            mandatoryOnly: false,
+            search: ''
+        };
         const activeKids = () => appState.kids.filter(k => !k.archived);
         const activePlayer = id => appState.kids.find(k => k.id === id && !k.archived);
         const validAmount = n => Number.isSafeInteger(n) && n >= 0 && n <= 1000000000;
@@ -316,6 +326,7 @@
             renderRewards();
             renderRedemptions();
             renderParentControls();
+            renderTaskBoard();
             renderTemplates();
             renderChoreChoices();
             updateNavigation();
@@ -783,6 +794,148 @@
                 `;
                 container.appendChild(row);
             });
+        }
+
+        // All Tasks is an independent view of every instance, not the squad cards' current list.
+        function renderTaskBoard() {
+            const container = document.getElementById('task-board');
+            container.innerHTML = '';
+            if (!appState.isParentMode) return;
+            const players = [...appState.kids].sort((a, b) => Number(!!a.archived) - Number(!!b.archived) || a.name.localeCompare(b.name));
+            const selectFilter = (key, label, options) => `<label class="task-filter">
+                <span class="task-filter-label">${label}</span>
+                <select onchange="setTaskBoardFilter('${key}', this.value)" aria-controls="task-board-results">
+                    ${options.map(([value, text]) => `<option value="${escapeHTML(value)}"${taskBoardFilters[key] === value ? ' selected' : ''}>${escapeHTML(text)}</option>`).join('')}
+                </select>
+            </label>`;
+            container.innerHTML = `
+                <div class="filters-bar" role="group" aria-label="Filter all tasks">
+                    ${selectFilter('player', 'Player', [['all', 'All players'], ...players.map(k => [k.id, `${k.name}${k.archived ? ' (archived)' : ''}`])])}
+                    ${selectFilter('cadence', 'Cadence', [['all', 'All'], ['daily', 'Daily'], ['weekly', 'Weekly'], ['scheduled', 'Scheduled (on-demand)'], ['on-demand', 'On-demand']])}
+                    ${selectFilter('status', 'Status', [['all', 'All'], ['active', 'Active'], ['pending', 'Waiting review'], ['completed', 'Completed'], ['missed', 'Missed'], ['expired', 'Expired']])}
+                    ${selectFilter('ownership', 'Ownership', [['all', 'All'], ['personal', 'Personal'], ['shared', 'Shared']])}
+                    ${selectFilter('scope', 'Scope', [['current', 'Current period'], ['open', 'All open'], ['week', 'This week'], ['history', 'Last 30 days'], ['all', 'All history']])}
+                    <label class="task-filter is-search">
+                        <span class="task-filter-label">Search task or player</span>
+                        <input type="search" value="${escapeHTML(taskBoardFilters.search)}" oninput="setTaskBoardSearch(this.value)" aria-controls="task-board-results">
+                    </label>
+                    <label class="task-filter is-check">
+                        <input type="checkbox" onchange="setTaskBoardFilter('mandatoryOnly', this.checked)"${taskBoardFilters.mandatoryOnly ? ' checked' : ''} aria-controls="task-board-results">
+                        <span>Mandatory only</span>
+                    </label>
+                    <button type="button" class="task-filter-reset" onclick="resetTaskBoardFilters()">Reset</button>
+                </div>
+                <div id="task-board-results"></div>`;
+            renderTaskBoardResults();
+        }
+
+        function renderTaskBoardResults() {
+            const container = document.getElementById('task-board-results');
+            if (!container) return;
+            container.innerHTML = '';
+            if (!appState.isParentMode) return;
+            const date = today();
+            const week = weekStart(date);
+            const sunday = new Date(`${week}T12:00:00`);
+            sunday.setDate(sunday.getDate() + 6);
+            const historyStart = new Date(`${date}T12:00:00`);
+            historyStart.setDate(historyStart.getDate() - 29);
+            const weekEnd = localDay(sunday);
+            const historyDay = localDay(historyStart);
+            const kids = new Map(appState.kids.map(k => [k.id, k]));
+            const templates = new Map(catalog.chores.map(t => [t.id, t]));
+            // Scheduled is a catalog-template flag (catalog.chores also feeds renderTemplates).
+            // It is a separate filter from other on-demand work; bonuses remain weekly.
+            const cadenceFor = c => templates.get(c.templateId)?.scheduled ? 'scheduled' : c.bonus ? 'weekly' : c.cadence || (c.daily || c.archivedDaily ? 'daily' : 'on-demand');
+            const periodFor = c => c.period || (cadenceFor(c) === 'weekly' ? weekStart(c.day) : c.day);
+            const open = c => c.status === 'active' || c.status === 'pending';
+            const search = taskBoardFilters.search.trim().toLocaleLowerCase();
+            // Scope uses the stored period, falling back to day (or Monday for weekly work).
+            // Current: today's dated work, the current weekly period and upcoming scheduled work,
+            // plus ALL pending dates.
+            // Open: active/pending at any date. Week: Monday–Sunday, inclusive.
+            // History: today and the previous 29 local days, inclusive; never future dates.
+            // All: every instance. Other filters still intersect with the chosen scope.
+            const filtered = appState.chores.filter(chore => {
+                const kid = kids.get(chore.assignedTo);
+                const period = periodFor(chore);
+                const scopeMatches = taskBoardFilters.scope === 'all' ||
+                    (taskBoardFilters.scope === 'current' && (chore.status === 'pending' || (chore.status === 'active' && chore.day > date) || period === (cadenceFor(chore) === 'weekly' ? week : date))) ||
+                    (taskBoardFilters.scope === 'open' && open(chore)) ||
+                    (taskBoardFilters.scope === 'week' && period >= week && period <= weekEnd) ||
+                    (taskBoardFilters.scope === 'history' && period >= historyDay && period <= date);
+                return scopeMatches &&
+                    (taskBoardFilters.player === 'all' || chore.assignedTo === taskBoardFilters.player) &&
+                    (taskBoardFilters.cadence === 'all' || cadenceFor(chore) === taskBoardFilters.cadence) &&
+                    (taskBoardFilters.status === 'all' || chore.status === taskBoardFilters.status) &&
+                    (taskBoardFilters.ownership === 'all' || chore.ownership === taskBoardFilters.ownership) &&
+                    (!taskBoardFilters.mandatoryOnly || chore.mandatory) &&
+                    (!search || chore.title.toLocaleLowerCase().includes(search) || kid.name.toLocaleLowerCase().includes(search));
+            });
+            filtered.sort((a, b) => {
+                const first = kids.get(a.assignedTo);
+                const second = kids.get(b.assignedTo);
+                return Number(!!first.archived) - Number(!!second.archived) || first.name.localeCompare(second.name) ||
+                    periodFor(b).localeCompare(periodFor(a)) || a.status.localeCompare(b.status);
+            });
+            const shown = filtered.slice(0, 500);
+            const statusLabels = {active: 'Active', pending: 'Waiting review', completed: 'Completed', missed: 'Missed', expired: 'Expired · no loss'};
+            const cadenceLabels = {daily: 'Daily', weekly: 'Weekly', scheduled: 'Scheduled', 'on-demand': 'On-demand'};
+            const rows = shown.map(chore => {
+                const kid = kids.get(chore.assignedTo);
+                const cadence = cadenceFor(chore);
+                const period = periodFor(chore);
+                const timing = cadence === 'weekly' ? `Week of ${period}` : cadence === 'scheduled' ? `Scheduled ${period}` : cadence === 'daily' ? period : `Assigned ${period}`;
+                const id = escapeHTML(chore.id);
+                const reviewable = !storageFailed && !prototypeResetInProgress && activePlayer(chore.assignedTo) && chore.status === 'pending';
+                const actions = reviewable ? `
+                    <button type="button" onclick="approveChore('${id}')" class="approve-button" aria-label="${escapeHTML(`Approve ${chore.title} for ${kid.name}`)}">Approve</button>
+                    <button type="button" onclick="rejectChore('${id}')" class="reject-button" aria-label="${escapeHTML(`Decline ${chore.title} for ${kid.name}`)}">Decline</button>` : assignmentEditable(chore) ? `
+                    <button type="button" onclick="openChangeOwner('${id}')" class="change-owner-button" aria-label="${escapeHTML(`Change owner: ${chore.title} for ${kid.name}`)}">Change owner</button>
+                    <button type="button" onclick="deleteChore('${id}')" class="remove-assignment-button" aria-label="${escapeHTML(`Remove ${chore.title} from ${kid.name}`)}">Remove</button>` : '';
+                // Like Assignments by Player, active rows offer editing, not Mark missed.
+                return `<tr>
+                    <td data-label="Player"><span class="task-table-value">${escapeHTML(kid.name)}${kid.archived ? ' <span class="archived-label">(archived)</span>' : ''}</span></td>
+                    <td data-label="Task"><span class="task-table-value"><span aria-hidden="true">${escapeHTML(chore.emoji)}</span> ${escapeHTML(chore.title)}${chore.mandatory ? ' <span class="task-badge is-mandatory">Required</span>' : ''}${needsReview(chore) ? ' <span class="task-badge is-review">Review</span>' : ''}</span></td>
+                    <td data-label="Cadence"><span class="task-table-value">${chore.bonus ? 'Reading bonus' : cadenceLabels[cadence]}</span></td>
+                    <td data-label="Ownership"><span class="task-table-value">${chore.ownership === 'shared' ? 'Shared' : chore.ownership === 'personal' ? 'Personal' : '—'}</span></td>
+                    <td data-label="Status"><span class="task-table-value"><span class="task-status is-${escapeHTML(chore.status)}">${statusLabels[chore.status]}</span></span></td>
+                    <td data-label="Award"><span class="task-table-value">${chore.points} XP · ${chore.coins} Coins</span></td>
+                    <td data-label="Penalty" title="Nominal ${chore.penalty} Coins; maximum potential loss ${maxPenalty(chore)} Coins, also bounded by original-day earnings and balance."><span class="task-table-value">${chore.penalty}${['missed', 'expired'].includes(chore.status) ? ` · lost ${chore.actualPenalty || 0}` : ''}</span></td>
+                    <td data-label="Period"><span class="task-table-value">${escapeHTML(timing)}</span></td>
+                    <td data-label="Actions">${actions ? `<div class="assignment-actions">${actions}</div>` : '<span class="task-table-value">—</span>'}</td>
+                </tr>`;
+            }).join('');
+            const totals = shown.filter(open).reduce((sum, c) => ({count: sum.count + 1, xp: sum.xp + c.points, coins: sum.coins + c.coins}), {count: 0, xp: 0, coins: 0});
+            container.innerHTML = `${shown.length ? `
+                <div class="task-table-scroll" tabindex="0" role="region" aria-labelledby="task-board-heading">
+                    <table class="task-table" aria-labelledby="task-board-heading">
+                        <thead><tr>${['Player', 'Task', 'Cadence', 'Ownership', 'Status', 'Award', 'Penalty', 'Period', 'Actions'].map(label => `<th scope="col">${label}</th>`).join('')}</tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>` : '<div class="empty-state"><p class="empty-state-title">No tasks match these filters</p><p class="help-text">Change the filters or reset to the current period.</p></div>'}
+                <div class="task-table-footer">
+                    <p role="status" aria-live="polite">${totals.count} open tasks · ${totals.xp} XP · ${totals.coins} Coins</p>
+                    ${filtered.length > 500 ? `<p class="help-text">Showing first 500 of ${filtered.length} tasks — narrow the filters.</p>` : ''}
+                </div>`;
+        }
+
+        function setTaskBoardFilter(key, value) {
+            if (!appState.isParentMode || !['player', 'cadence', 'status', 'ownership', 'scope', 'mandatoryOnly'].includes(key)) return;
+            taskBoardFilters[key] = value;
+            renderTaskBoardResults();
+        }
+
+        function setTaskBoardSearch(value) {
+            if (!appState.isParentMode) return;
+            taskBoardFilters.search = value;
+            renderTaskBoardResults();
+        }
+
+        function resetTaskBoardFilters() {
+            if (!appState.isParentMode) return;
+            taskBoardFilters = {player: 'all', cadence: 'all', status: 'all', ownership: 'all', scope: 'current', mandatoryOnly: false, search: ''};
+            renderTaskBoard();
         }
 
         // Navigation state
