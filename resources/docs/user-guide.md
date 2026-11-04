@@ -61,7 +61,8 @@ streak days. Parent remains available even if every player is archived.
   a parent removes unsubmitted duplicates. A completion blocks a second payout.
 - First use seeds daily pet/household/tidying work and optional reading. Alex gets
   cat/table jobs, Chris dishwasher/trash: baseline earnings are 80/95 Coins/day,
-  plus reading/extras. Own-room vacuuming is personal weekly work; shared vacuum
+  plus reading/extras. Fresh/reset starter profiles begin with **1000 Coins**;
+  existing saves keep their balances. Own-room vacuuming is personal weekly work; shared vacuum
   areas need explicit weekly assignment. Shared cooking is per actual job;
   training is a parent-scheduled one-off, not mandatory daily work.
 - Tasks worth **75 XP or 75 Coins or more** always need parent review; smaller
@@ -71,11 +72,11 @@ streak days. Parent remains available even if every player is archived.
   a local Monday–Sunday week queue **250 XP + 250 Coins** for parent confirmation.
   Late approvals count in the original week. Retained reading dates and weekly
   decisions prevent repeat claims; a rejected bonus is final for that week.
-- Penalties are nominal, not guaranteed. Actual loss is the minimum of nominal
-  penalty, half the task's Coin award (rounded down), balance, and original-day
-  earned Coins minus earlier penalties. No flat 5-Coin cap or savings raid on
-  zero-earning days. Cards show nominal/max potential loss; Missed shows actual
-  loss. Only mandatory daily expiry auto-penalizes; optional/weekly expiry is free.
+- Penalties are nominal, not guaranteed. Actual loss is the minimum of the
+  player's available Coin balance, nominal penalty and half the task's Coin award
+  (rounded down). No flat 5-Coin cap; losses can come from saved Coins and never
+  reduce XP. Cards show nominal/max potential loss; Missed shows actual loss.
+  Only mandatory daily expiry auto-penalizes; optional/weekly expiry is free.
   Parents may explicitly mark work missed; direct +/-5 Coins is an override.
   None of these deductions affects XP.
 - Daily rollover is local midnight, weekly rollover Monday, checked on open,
@@ -102,6 +103,23 @@ it is not the writable family snapshot. Saved collections, including empty lists
 and deletions, always win. Editing defaults neither replaces saved assignments
 nor reprices rewards/requests. **Add missing default rewards** requires confirmation
 and may restore deleted defaults, but never changes existing prices/custom rewards.
+
+## Day review and test clock
+
+**Day Review** in Admin shows one chosen date for every player: required tasks,
+completed required work, not-done/missed/expired items, pending reviews, and the
+Coins earned or lost that day. Weekly work counts on the Monday that starts its
+week; other tasks count on their assigned date. Archived players are labelled.
+Pick another date to review history.
+
+**Test time travel** in Admin moves the family clock forward without waiting for
+midnight. Use **+1 day**, **+7 days**, or jump to a date up to 30 days ahead per
+action; repeat for longer ranges. Each step runs the real rollover, so daily work
+repeats, unsubmitted mandatory work auto-fails with the current Coin penalty, and
+optional/weekly expiry stays free. The simulated date is saved with family data,
+so reloads and other devices stay consistent. **Use real date** is allowed only
+when the simulated date is not in the future; otherwise reset prototype data to
+start over. Reset clears the simulated date.
 
 ## Shared storage and failures
 
@@ -137,7 +155,7 @@ Choose **Parent**, enter the saved PIN and use **Reset prototype data** in Admin
 Read the irreversible-loss warning and type exactly `RESET`; Cancel or any other
 input changes nothing. This resets **all server-saved family data for every device
 using this PHP service**: active/archived profiles, XP/Coins, chores, custom
-catalog/reward copies, history, requests and saved PIN.
+catalog/reward copies, history, requests, saved PIN and any simulated test date.
 
 The client waits for queued writes, then sends `DELETE /api.php` with the latest
 `If-Match`. On confirmation it reloads and seeds current catalog defaults:

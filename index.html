@@ -160,6 +160,14 @@
                     <div id="task-board" class="task-board"></div>
                 </div>
 
+                <div class="admin-panel" data-section="day">
+                    <h2 class="panel-title" id="day-review-heading">Day Review</h2>
+                    <p class="help-text">Pick a date to see each player’s required tasks, what was completed, missed or still waiting for review, and the Coins earned or lost that day. Weekly work counts on the Monday that starts its week; other tasks count on their assigned date.</p>
+                    <label for="day-review-date" class="task-filter-label">Review date</label>
+                    <input id="day-review-date" type="date" onchange="renderDayReview()" class="template-input">
+                    <div id="day-review" class="day-review"></div>
+                </div>
+
                 <div class="admin-panel" data-section="cards">
                     <h3 id="assignments-heading" tabindex="-1" class="panel-title">
                         <i data-lucide="list-checks" class="panel-icon"></i> Assignments by Player
@@ -241,9 +249,26 @@
                     <button onclick="importDefaultRewards()" class="import-rewards-button">Add missing default rewards (confirm first)</button>
                 </div>
 
+                <section class="test-clock-panel" data-section="admin" aria-labelledby="test-clock-heading">
+                    <h3 id="test-clock-heading" class="choice-title">Test time travel</h3>
+                    <p class="detail-text">Move the family clock forward without waiting for midnight. Each jump runs the real daily rollover, so repeated tasks, missed mandatory work and Coin penalties behave exactly as they will in normal use.</p>
+                    <p id="test-clock-status" class="test-clock-status" role="status" aria-live="polite"></p>
+                    <div class="test-clock-actions">
+                        <button type="button" onclick="advanceTestDays(1)" class="test-clock-button">+1 day</button>
+                        <button type="button" onclick="advanceTestDays(7)" class="test-clock-button">+7 days</button>
+                    </div>
+                    <div class="test-clock-jump">
+                        <label for="test-jump-date" class="task-filter-label">Jump to date (forward, max 30 days per jump)</label>
+                        <input id="test-jump-date" type="date" class="template-input">
+                        <button type="button" onclick="jumpTestDate()" class="test-clock-button">Jump forward</button>
+                    </div>
+                    <button type="button" onclick="useRealDate()" id="test-clock-reset" class="test-clock-reset">Use real date</button>
+                    <p class="muted-text">Simulated time is saved with family data, so reloads and other devices stay consistent. Returning to real time is only allowed when the simulated date is not in the future; otherwise reset prototype data.</p>
+                </section>
+
                 <section class="reset-panel" data-section="admin" aria-labelledby="reset-heading">
                     <h3 id="reset-heading" class="choice-title">Prototype data</h3>
-                    <p class="detail-text">data/catalog.json supplies first-run defaults; the PHP service saves one shared family for all devices using this server. Reset irreversibly removes ALL profiles (including archived), balances, custom tasks/rewards, history, requests and saved PIN for ALL those devices. Type RESET to confirm. Reload starts with Alex/Chris and current catalog defaults, restoring the default PIN. Old browser data is ignored and left untouched.</p>
+                    <p class="detail-text">data/catalog.json supplies first-run defaults; the PHP service saves one shared family for all devices using this server. Reset irreversibly removes ALL profiles (including archived), balances, custom tasks/rewards, history, requests, saved PIN and any simulated test date for ALL those devices. Type RESET to confirm. Reload starts with Alex/Chris and current catalog defaults, restoring the default PIN. Old browser data is ignored and left untouched.</p>
                     <button onclick="resetPrototypeData()" class="reset-button">Reset prototype data</button>
                     <p class="muted-text">Irreversible. You must type RESET in the confirmation to proceed.</p>
                 </section>
@@ -262,6 +287,10 @@
                 <button onclick="switchAdminSection('tasks')" id="admin-nav-tasks" class="nav-button">
                     <i data-lucide="list-checks" class="nav-icon"></i>
                     <span class="nav-label nav-section-label">Tasks</span>
+                </button>
+                <button onclick="switchAdminSection('day')" id="admin-nav-day" class="nav-button">
+                    <i data-lucide="calendar-check" class="nav-icon"></i>
+                    <span class="nav-label nav-section-label">Day</span>
                 </button>
                 <button onclick="switchAdminSection('cards')" id="admin-nav-cards" class="nav-button">
                     <i data-lucide="layout-grid" class="nav-icon"></i>
@@ -366,7 +395,7 @@
                 <div class="chore-options">
                     <label for="chore-coins">Victory Coins (0–1000)</label>
                     <input type="number" id="chore-coins" min="0" max="1000" step="1" value="10" required class="coin-input">
-                    <p>Actual missed loss is bounded by half the award, balance and original-day remaining earnings; nominal values are not guaranteed deductions.</p>
+                    <p>Actual missed loss is bounded by half the award and the available Coin balance; nominal values are not guaranteed deductions.</p>
                     <label for="chore-cadence" class="option-label">Cadence</label>
                     <select id="chore-cadence" class="cadence-input"><option value="on-demand">On-demand (one job)</option><option value="daily">Daily (local midnight)</option><option value="weekly">Weekly (Mon–Sun)</option></select>
                     <label class="option-label"><input type="checkbox" id="chore-mandatory"> Mandatory for daily streak</label>
@@ -409,7 +438,7 @@
                 </div>
                 <div>
                     <label for="kid-points" class="form-label">Starting Coins (XP starts at zero)</label>
-                    <input type="number" id="kid-points" value="0" min="0" max="1000" step="1" required class="form-input">
+                    <input type="number" id="kid-points" value="1000" min="0" max="1000" step="1" required class="form-input">
                 </div>
                 <div class="form-actions">
                     <button type="button" onclick="closeModal('modal-kid')" class="cancel-button">Cancel</button>

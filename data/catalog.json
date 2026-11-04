@@ -1,13 +1,13 @@
 {
   "kids": [
-    {"id":"k1","name":"Alex","avatar":"🎮","xp":0,"coins":0,"days":{}},
-    {"id":"k2","name":"Chris","avatar":"🗡️","xp":0,"coins":0,"days":{}}
+    {"id":"k1","name":"Alex","avatar":"🎮","xp":0,"coins":1000,"days":{}},
+    {"id":"k2","name":"Chris","avatar":"🗡️","xp":0,"coins":1000,"days":{}}
   ],
   "chores": {
     "daily": [
       {"id":"cat-care","title":"Refill Cat Food & Fresh Water","points":15,"coins":15,"emoji":"🐱","ownership":"shared","defaultOwner":"k1","seed":true,"mandatory":true,"requiresReview":false},
-      {"id":"tidy-floor","title":"Tidy Floor","points":20,"coins":20,"emoji":"🧹","ownership":"personal","seed":true,"mandatory":true,"requiresReview":false},
-      {"id":"tidy-desk","title":"Tidy Desk & Cable Area","points":20,"coins":20,"emoji":"🖥️","ownership":"personal","seed":true,"mandatory":true,"requiresReview":false},
+      {"id":"tidy-floor","title":"Tidy own Floor","points":20,"coins":20,"emoji":"🧹","ownership":"personal","seed":true,"mandatory":true,"requiresReview":false},
+      {"id":"tidy-desk","title":"Tidy Desk","points":20,"coins":20,"emoji":"🖥️","ownership":"personal","seed":true,"mandatory":true,"requiresReview":false},
       {"id":"dishwasher","title":"Empty Dishwasher","points":30,"coins":30,"emoji":"🍽️","ownership":"shared","defaultOwner":"k2","seed":true,"mandatory":true,"requiresReview":false},
       {"id":"dinner-table","title":"Set & Clear Dinner Table","points":25,"coins":25,"emoji":"🍴","ownership":"shared","defaultOwner":"k1","seed":true,"mandatory":true,"requiresReview":false},
       {"id":"trash","title":"Take Out Trash & Recycling","points":25,"coins":25,"emoji":"🗑️","ownership":"shared","defaultOwner":"k2","seed":true,"mandatory":true,"requiresReview":false},
@@ -19,26 +19,32 @@
       {"id":"vacuum-stairs","title":"Vacuum Stairs","points":50,"coins":50,"emoji":"🪜","ownership":"shared","mandatory":false,"requiresReview":false},
       {"id":"vacuum-gaming","title":"Vacuum Downstairs Gaming Room","points":50,"coins":50,"emoji":"🎮","ownership":"shared","mandatory":false,"requiresReview":false},
       {"id":"vacuum-tv","title":"Vacuum Downstairs TV Room","points":50,"coins":50,"emoji":"📺","ownership":"shared","mandatory":false,"requiresReview":false},
-      {"id":"wash-toilet-upstairs","title":"Wash Toilet Upstairs","points":50,"coins":50,"emoji":"🚽","ownership":"shared","mandatory":false,"requiresReview":false},
-      {"id":"wash-floor-bathroom-downstairs","title":"Wash Floor in Bathroom Downstairs","points":50,"coins":50,"emoji":"🧽","ownership":"shared","mandatory":false,"requiresReview":false},
+      {"id":"wash-toilet-upstairs","title":"Wash Toilet Upstairs","points":100,"coins":100,"emoji":"🚽","ownership":"shared","mandatory":false,"requiresReview":false},
+      {"id":"wash-floor-bathroom-downstairs","title":"Wash Floor in Bathroom Downstairs","points":100,"coins":100,"emoji":"🧽","ownership":"shared","mandatory":false,"requiresReview":false},
       {"id":"reading-week","title":"Weekly Reading Streak (5 of 7 Days)","points":250,"coins":250,"emoji":"📖","ownership":"personal","mandatory":false,"requiresReview":true,"bonus":"reading","requiredDays":5}
     ],
     "on-demand": [
-      {"id":"simple-meal","title":"Prep Simple Meal / Lunch","points":40,"coins":40,"emoji":"🥪","ownership":"personal","mandatory":false,"requiresReview":false},
       {"id":"bread","title":"Bake Bread","points":100,"coins":100,"emoji":"🍞","ownership":"shared","mandatory":false,"requiresReview":true},
-      {"id":"family-dinner","title":"Cook Family Dinner","points":120,"coins":120,"emoji":"🍳","ownership":"shared","mandatory":false,"requiresReview":true},
+      {"id":"family-dinner","title":"Cook Family Dinner","points":200,"coins":200,"emoji":"🍳","ownership":"shared","mandatory":false,"requiresReview":true},
       {"id":"training","title":"Go to Training / Workout","points":25,"coins":25,"emoji":"🏋️","scheduled":true,"ownership":"personal","mandatory":false,"requiresReview":true}
     ]
   },
   "rewards": [
-    {"id":"gaming-extension","title":"+30 Min Weekend Gaming Extension","cost":75,"tier":1,"emoji":"🎮"},
-    {"id":"minor-pass","title":"One-Time Minor Chore Pass (Parent Agreed)","cost":500,"tier":2,"emoji":"🎟️"},
-    {"id":"bedtime","title":"+30 Min Weekend Bedtime Buffer","cost":100,"tier":1,"emoji":"🌙"},
-    {"id":"playlist","title":"Choose the Family Car Playlist","cost":50,"tier":1,"emoji":"🎵"},
+    {"id":"car-music","title":"Choose the Car Music for a Week","cost":100,"tier":1,"emoji":"🎵"},
+    {"id":"weekend-movie","title":"Pick the Weekend Movie","cost":150,"tier":1,"emoji":"🍿"},
+    {"id":"breakfast-pick","title":"Choose Saturday Breakfast","cost":150,"tier":1,"emoji":"🥞"},
+    {"id":"screen-hour","title":"1 Hour Weekday Screen Time","cost":350,"tier":2,"emoji":"📱"},
     {"id":"dinner-choice","title":"Choose Friday Night Dinner","cost":500,"tier":2,"emoji":"🍕"},
-    {"id":"pocket-money","title":"NOK 50,- Pocket Money","cost":500,"tier":2,"emoji":"💰"},
-    {"id":"friends-session","title":"Parent-Agreed Gaming Session with Friends","cost":750,"tier":2,"emoji":"🎮"},
+    {"id":"movie-snacks","title":"Movie Night with Snacks of Choice","cost":500,"tier":2,"emoji":"🎬"},
+    {"id":"new-book","title":"New Book or Comic of Choice","cost":700,"tier":2,"emoji":"📗"},
+    {"id":"gaming-extension","title":"+30 Min Weekend Gaming Extension","cost":750,"tier":2,"emoji":"🎮"},
+    {"id":"friend-over","title":"Friend Over or Weekend Sleepover","cost":750,"tier":2,"emoji":"🛌"},
+    {"id":"bedtime","title":"+30 Min Weekend Bedtime Buffer","cost":1000,"tier":2,"emoji":"🌙"},
+    {"id":"minor-pass","title":"One-Time Minor Chore Pass (Parent Agreed)","cost":1000,"tier":2,"emoji":"🎟️"},
+    {"id":"pocket-money","title":"NOK 50,- Pocket Money","cost":3000,"tier":3,"emoji":"💰"},
     {"id":"gaming-money","title":"NOK 50,- for Gaming Purchase","cost":3000,"tier":3,"emoji":"🎮"},
-    {"id":"special-day","title":"Plan a Special Family Day (Agree Scope First)","cost":3000,"tier":3,"emoji":"🌟"}
+    {"id":"cinema","title":"Cinema Trip","cost":3500,"tier":3,"emoji":"🎟️"},
+    {"id":"day-out","title":"Day Out (Swimming / Bowling / Climbing)","cost":4000,"tier":3,"emoji":"🏊"},
+    {"id":"new-game","title":"New Game of Choice","cost":4500,"tier":3,"emoji":"🎮"}
   ]
 }

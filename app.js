@@ -8,7 +8,9 @@
             kids: [],
             chores: [],
             rewards: [],
-            redemptions: []
+            redemptions: [],
+            // Parent test clock. null means real local time; a date freezes rollover.
+            simulatedDate: null
         };
 
         // First-run profiles and prices come from the source catalog, never overwrite saves.
@@ -44,9 +46,21 @@
         const validAmount = n => Number.isSafeInteger(n) && n >= 0 && n <= 1000000000;
         const newId = () => Array.from(crypto.getRandomValues(new Uint32Array(4)), n => n.toString(16)).join('-');
         const escapeHTML = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
-        const today = () => localDay(new Date());
+        const today = () => appState.simulatedDate || localDay(new Date());
+        const realToday = () => localDay(new Date());
         function localDay(date) {
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+        function addDays(day, amount) {
+            const date = new Date(`${day}T12:00:00`);
+            date.setDate(date.getDate() + amount);
+            return localDay(date);
+        }
+        function nextDay(day) {
+            return addDays(day, 1);
+        }
+        function dayDiff(from, to) {
+            return Math.round((new Date(`${to}T12:00:00`) - new Date(`${from}T12:00:00`)) / 86400000);
         }
         function previousDay(day) {
             const date = new Date(`${day}T12:00:00`);
@@ -88,6 +102,7 @@
             data.rewards.forEach(r => requireValue(typeof r.title === 'string' && typeof r.emoji === 'string' && validAmount(r.cost) && r.cost > 0 && [1,2,3].includes(r.tier), 'Invalid reward price/tier'));
             checkRows(data.redemptions, 'redemptions');
             data.redemptions.forEach(r => requireValue(typeof r.title === 'string' && validAmount(r.cost) && r.cost > 0 && ['pending','fulfilled','declined'].includes(r.status) && data.kids.some(k => k.id === r.kidId), 'Invalid redemption'));
+            requireValue(data.simulatedDate == null || (typeof data.simulatedDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data.simulatedDate)), 'Invalid test date');
             requireValue(typeof data.parentPin === 'string' && /^\d{4}$/.test(data.parentPin), 'Invalid Parent PIN');
         }
 
@@ -221,14 +236,14 @@
                     .map(k => templateQuest(c, k.id)));
         }
         function loadFromStorage(saved) {
-            const parsed = saved === null ? JSON.parse(JSON.stringify({schemaVersion: 2, kids: defaultKids, chores: seedChores(), rewards: catalog.rewards, redemptions: [], parentPin: '1396'})) : saved;
+            const parsed = saved === null ? JSON.parse(JSON.stringify({schemaVersion: 2, kids: defaultKids, chores: seedChores(), rewards: catalog.rewards, redemptions: [], simulatedDate: null, parentPin: '1396'})) : saved;
             requireValue(parsed && parsed.schemaVersion === 2, 'Unsupported saved data version');
             validateData(parsed);
             parsed.kids.forEach(k => {
                 k.readingDays ??= [];
                 k.readingBonuses ??= {};
             });
-            Object.assign(appState, {kids: parsed.kids, chores: parsed.chores, rewards: parsed.rewards, redemptions: parsed.redemptions, parentPin: parsed.parentPin});
+            Object.assign(appState, {kids: parsed.kids, chores: parsed.chores, rewards: parsed.rewards, redemptions: parsed.redemptions, simulatedDate: parsed.simulatedDate ?? null, parentPin: parsed.parentPin});
             savedData = parsed;
         }
 
@@ -278,6 +293,7 @@
                 chores: appState.chores,
                 rewards: appState.rewards,
                 parentPin: appState.parentPin,
+                simulatedDate: appState.simulatedDate,
                 redemptions: appState.redemptions
                 });
                 pendingWrites++;
@@ -344,6 +360,8 @@
             renderRedemptions();
             renderParentControls();
             renderTaskBoard();
+            renderDayReview();
+            renderTestClock();
             renderTemplates();
             renderChoreChoices();
             updateNavigation();
@@ -527,7 +545,7 @@
                         <details class="chore-details">
                             <summary aria-label="Details for ${escapeHTML(chore.title)}">Task details</summary>
                             <p>${chore.mandatory ? 'Required' : 'Optional'} · ${needsReview(chore) ? 'Parent review required' : 'No parent review required'}.</p>
-                            ${chore.penalty > 0 ? `<p>Nominal penalty: ${chore.penalty} Coins; maximum potential loss: ${maxPenalty(chore)} Coins. Actual loss is also limited by the balance and that day's earnings after previous penalties.</p>` : '<p>No Coin penalty.</p>'}
+                            ${chore.penalty > 0 ? `<p>Nominal penalty: ${chore.penalty} Coins; maximum potential loss: ${maxPenalty(chore)} Coins. Actual loss is deducted from the player's available Coin balance.</p>` : '<p>No Coin penalty.</p>'}
                             ${!chore.mandatory && (chore.daily || chore.archivedDaily || chore.cadence === 'weekly') ? '<p>Unsubmitted optional chores expire without a penalty.</p>' : ''}
                         </details>
                         ${parentExtras}
@@ -730,7 +748,7 @@
                                     <h5 class="assignment-title"><span aria-hidden="true">${escapeHTML(chore.emoji)}</span> ${escapeHTML(chore.title)}</h5>
                                     <p class="detail-text"><strong>${chore.mandatory ? 'Required' : 'Optional'}</strong> · ${escapeHTML(timing)}${needsReview(chore) ? ' · Parent review' : ''}</p>
                                     ${chore.status === 'pending' ? `<p class="muted-text">Submitted for ${escapeHTML(chore.day)} · If approved: +${chore.points} XP · +${chore.coins} Coins</p>
-                                    <p class="muted-text">${chore.bonus ? 'Declining retains the weekly decision; this bonus cannot be claimed again.' : `Marking missed awards no XP or Coins. Nominal penalty ${chore.penalty}; max ${maxPenalty(chore)} Coins, bounded by original-day earnings and balance. XP is safe.`}</p>` : ''}
+                                    <p class="muted-text">${chore.bonus ? 'Declining retains the weekly decision; this bonus cannot be claimed again.' : `Marking missed awards no XP or Coins. Nominal penalty ${chore.penalty}; max ${maxPenalty(chore)} Coins, deducted from the player's Coin balance. XP is safe.`}</p>` : ''}
                                 </div>
                                 <span class="assignment-status${chore.status === 'pending' ? ' is-pending' : chore.status === 'completed' ? ' is-completed' : ''}">${status}</span>
                                 ${appState.isParentMode && chore.status === 'pending' ? `<div class="review-actions">
@@ -915,7 +933,7 @@
                     <td data-label="Ownership"><span class="task-table-value">${chore.ownership === 'shared' ? 'Shared' : chore.ownership === 'personal' ? 'Personal' : '—'}</span></td>
                     <td data-label="Status"><span class="task-table-value"><span class="task-status is-${escapeHTML(chore.status)}">${statusLabels[chore.status]}</span></span></td>
                     <td data-label="Award"><span class="task-table-value">${chore.points} XP · ${chore.coins} Coins</span></td>
-                    <td data-label="Penalty" title="Nominal ${chore.penalty} Coins; maximum potential loss ${maxPenalty(chore)} Coins, also bounded by original-day earnings and balance."><span class="task-table-value">${chore.penalty}${['missed', 'expired'].includes(chore.status) ? ` · lost ${chore.actualPenalty || 0}` : ''}</span></td>
+                    <td data-label="Penalty" title="Nominal ${chore.penalty} Coins; maximum potential loss ${maxPenalty(chore)} Coins, deducted from the player's Coin balance."><span class="task-table-value">${chore.penalty}${['missed', 'expired'].includes(chore.status) ? ` · lost ${chore.actualPenalty || 0}` : ''}</span></td>
                     <td data-label="Period"><span class="task-table-value">${escapeHTML(timing)}</span></td>
                     <td data-label="Actions">${actions ? `<div class="assignment-actions">${actions}</div>` : '<span class="task-table-value">—</span>'}</td>
                 </tr>`;
@@ -932,6 +950,167 @@
                     <p role="status" aria-live="polite">${totals.count} open tasks · ${totals.xp} XP · ${totals.coins} Coins</p>
                     ${filtered.length > 500 ? `<p class="help-text">Showing first 500 of ${filtered.length} tasks — narrow the filters.</p>` : ''}
                 </div>`;
+        }
+
+        // Parent day review: required/completed work and Coin movement for one date.
+        function renderDayReview() {
+            const container = document.getElementById('day-review');
+            const input = document.getElementById('day-review-date');
+            if (!container || !input || !appState.isParentMode) return;
+            if (!input.value || input.value > today()) input.value = today();
+            input.max = today();
+            const date = input.value;
+            const players = [...appState.kids].sort((a, b) => Number(!!a.archived) - Number(!!b.archived) || a.name.localeCompare(b.name));
+            if (!players.length) {
+                container.innerHTML = '<p class="help-text">No players yet. Add or restore a player in Manage Players.</p>';
+                return;
+            }
+            const choresById = new Map(appState.chores.map(c => [c.id, c]));
+            container.innerHTML = players.map(kid => {
+                const record = kid.days[date];
+                const required = record?.required || [];
+                const completed = record?.completed || [];
+                const completedSet = new Set(completed);
+                const requiredSet = new Set(required);
+                const dayChores = appState.chores.filter(c => c.assignedTo === kid.id && c.day === date);
+                const pendingCount = dayChores.filter(c => c.status === 'pending').length;
+                const missedCount = dayChores.filter(c => c.status === 'missed').length;
+                const expiredCount = dayChores.filter(c => c.status === 'expired').length;
+                const pendingIds = new Set(dayChores.filter(c => c.status === 'pending').map(c => c.id));
+                const completedRequired = required.filter(id => completedSet.has(id)).length;
+                const notDone = required.filter(id => !completedSet.has(id) && !pendingIds.has(id)).length;
+                const entries = [];
+                const seen = new Set();
+                dayChores.forEach(chore => {
+                    entries.push({chore, required: requiredSet.has(chore.id), completed: completedSet.has(chore.id)});
+                    seen.add(chore.id);
+                });
+                required.forEach(id => {
+                    if (seen.has(id)) return;
+                    seen.add(id);
+                    entries.push({chore: choresById.get(id) || null, required: true, completed: completedSet.has(id)});
+                });
+                completed.forEach(id => {
+                    if (seen.has(id)) return;
+                    seen.add(id);
+                    entries.push({chore: choresById.get(id) || null, required: requiredSet.has(id), completed: true});
+                });
+                entries.sort((a, b) => {
+                    const rank = entry => entry.completed ? 3 : entry.required ? 0 : entry.chore?.status === 'pending' ? 1 : 2;
+                    return rank(a) - rank(b) || (a.chore?.title || '').localeCompare(b.chore?.title || '');
+                });
+                const statusFor = entry => {
+                    if (entry.completed) return {label: 'Completed', cls: 'is-completed'};
+                    const status = entry.chore?.status;
+                    if (status === 'completed') return {label: 'Completed', cls: 'is-completed'};
+                    if (status === 'pending') return {label: 'Waiting review', cls: 'is-pending'};
+                    if (status === 'missed') return {label: 'Missed', cls: 'is-missed'};
+                    if (status === 'expired') return {label: 'Expired · no loss', cls: 'is-expired'};
+                    if (status === 'active') return {label: date === today() ? 'Open' : 'Not done', cls: 'is-open'};
+                    return {label: 'Removed task', cls: 'is-expired'};
+                };
+                const rows = entries.map(entry => {
+                    const chore = entry.chore;
+                    const status = statusFor(entry);
+                    const title = chore ? `<span aria-hidden="true">${escapeHTML(chore.emoji)}</span> ${escapeHTML(chore.title)}` : 'Removed task';
+                    const meta = chore
+                        ? `${entry.required ? 'Required' : 'Optional'} · ${chore.points} XP / ${chore.coins} Coins${chore.status === 'missed' ? ` · lost ${chore.actualPenalty || 0} Coins` : ''}${chore.status === 'pending' ? ' · pending review' : ''}`
+                        : 'Assignment no longer exists; history is retained.';
+                    return `<li class="day-review-row">
+                        <div class="day-review-details">
+                            <span class="day-review-title">${title}</span>
+                            <span class="detail-text">${meta}</span>
+                        </div>
+                        <span class="day-review-status ${status.cls}">${status.label}</span>
+                    </li>`;
+                }).join('');
+                return `<section class="day-review-card${kid.archived ? ' is-archived' : ''}">
+                    <div class="section-heading">
+                        <div class="player-identity">
+                            <span class="squad-avatar" aria-hidden="true">${escapeHTML(kid.avatar)}</span>
+                            <div>
+                                <h4 class="squad-name">${escapeHTML(kid.name)}${kid.archived ? ' <span class="archived-label">(archived)</span>' : ''}</h4>
+                                <span class="player-history">${date}${record?.missed ? ' · day marked missed' : ''}</span>
+                            </div>
+                        </div>
+                        <div class="player-balances">
+                            <span class="coin-amount">${kid.coins} Coins</span>
+                            <span class="player-history">+${record?.earned || 0} earned / -${record?.lost || 0} lost</span>
+                        </div>
+                    </div>
+                    <div class="day-review-stats">
+                        <div class="squad-stat"><span class="stat-label">Required</span><span class="stat-value">${required.length}</span></div>
+                        <div class="squad-stat is-completed"><span class="stat-label">Required done</span><span class="stat-value">${completedRequired}</span></div>
+                        <div class="squad-stat"><span class="stat-label">Not done</span><span class="stat-value">${notDone}</span></div>
+                        <div class="squad-stat is-pending"><span class="stat-label">Waiting review</span><span class="stat-value">${pendingCount}</span></div>
+                        <div class="squad-stat"><span class="stat-label">Missed / expired</span><span class="stat-value">${missedCount} / ${expiredCount}</span></div>
+                    </div>
+                    ${rows ? `<ul class="day-review-list">${rows}</ul>` : '<p class="help-text">No tasks or activity recorded for this date.</p>'}
+                </section>`;
+            }).join('');
+        }
+
+        // Parent test clock: step the real rollover forward without waiting for midnight.
+        function renderTestClock() {
+            const status = document.getElementById('test-clock-status');
+            if (!status) return;
+            const simulated = appState.simulatedDate;
+            const real = realToday();
+            const ahead = simulated ? dayDiff(real, simulated) : 0;
+            status.classList.toggle('is-simulated', !!simulated);
+            status.textContent = simulated
+                ? `Simulated date: ${simulated} (${ahead > 0 ? `${ahead} day${ahead === 1 ? '' : 's'} ahead of` : ahead < 0 ? `${-ahead} day${-ahead === 1 ? '' : 's'} behind` : 'same as'} real time, ${real}). Rollover and history use this date.`
+                : `Using real time: ${real}. No simulated date is set.`;
+            const jump = document.getElementById('test-jump-date');
+            if (jump) {
+                jump.min = nextDay(today());
+                jump.max = addDays(today(), 30);
+                if (jump.value && (jump.value < jump.min || jump.value > jump.max)) jump.value = '';
+            }
+            const reset = document.getElementById('test-clock-reset');
+            if (reset) {
+                const blocked = !!simulated && ahead > 0;
+                reset.disabled = blocked;
+                reset.title = blocked ? 'Cannot rewind a future simulated date. Reset prototype data to start over.' : 'Return to real local time.';
+            }
+        }
+
+        function advanceTestDays(count) {
+            if (!appState.isParentMode || storageFailed || prototypeResetInProgress) return;
+            const requested = Math.floor(Number(count));
+            if (!Number.isFinite(requested) || requested < 1) return showToast('Choose at least one day.', 'alert-circle');
+            if (requested > 30) return showToast('Move at most 30 days at a time.', 'alert-circle');
+            for (let i = 0; i < requested; i++) {
+                appState.simulatedDate = nextDay(today());
+                rollDailyQuests(false);
+            }
+            saveToStorage();
+            renderApp();
+            showToast(`Test clock moved to ${today()} (+${requested} day${requested === 1 ? '' : 's'}).`, 'calendar-clock');
+        }
+
+        function jumpTestDate() {
+            if (!appState.isParentMode || storageFailed || prototypeResetInProgress) return;
+            const input = document.getElementById('test-jump-date');
+            const value = input?.value;
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return showToast('Choose a date to jump to.', 'alert-circle');
+            const diff = dayDiff(today(), value);
+            if (diff < 1) return showToast('Choose a date after the current test date.', 'alert-circle');
+            if (diff > 30) return showToast('Jump at most 30 days at a time; repeat for longer ranges.', 'alert-circle');
+            advanceTestDays(diff);
+            if (input) input.value = '';
+        }
+
+        function useRealDate() {
+            if (!appState.isParentMode || storageFailed || prototypeResetInProgress) return;
+            if (!appState.simulatedDate) return showToast('Already using real time.', 'clock');
+            const real = realToday();
+            if (dayDiff(real, appState.simulatedDate) > 0) return showToast('Cannot rewind a future test date. Use Reset prototype data to start over.', 'alert-circle');
+            appState.simulatedDate = null;
+            rollDailyQuests(false);
+            saveToStorage();
+            renderApp();
+            showToast(`Test clock returned to real time: ${real}.`, 'clock');
         }
 
         function setTaskBoardFilter(key, value) {
@@ -953,7 +1132,7 @@
         }
 
         // Admin section switcher
-        const ADMIN_SECTIONS = ['tasks', 'cards', 'players', 'catalog', 'assign', 'admin'];
+        const ADMIN_SECTIONS = ['tasks', 'day', 'cards', 'players', 'catalog', 'assign', 'admin'];
         function switchAdminSection(section) {
             if (!appState.isParentMode || !ADMIN_SECTIONS.includes(section)) return;
             adminSection = section;
@@ -1084,7 +1263,7 @@
         function renderTemplateDetails() {
             const template = catalog.chores.find(c => c.id === document.getElementById('template-choice').value);
             if (!template) return;
-            document.getElementById('template-details').textContent = `${template.points} lifetime XP / ${template.coins} Coins · ${template.ownership} · ${template.scheduled ? 'scheduled session' : template.cadence} · ${needsReview(template) ? 'Parent review required' : 'No parent review required'} · nominal penalty ${nominalPenalty(template)}, applied max ${maxPenalty(template)} (also bounded by original-day earnings and balance). ${template.bonus ? 'Automatically queued for parent confirmation after five distinct reading days; not manually assignable.' : template.ownership === 'shared' ? 'ONE player per household job. Daily/weekly assignment repeats for this player until deleted.' : 'Assign separately to each player who needs it. Daily/weekly assignment repeats until deleted.'}`;
+            document.getElementById('template-details').textContent = `${template.points} lifetime XP / ${template.coins} Coins · ${template.ownership} · ${template.scheduled ? 'scheduled session' : template.cadence} · ${needsReview(template) ? 'Parent review required' : 'No parent review required'} · nominal penalty ${nominalPenalty(template)}, applied max ${maxPenalty(template)} (deducted from the player's Coin balance). ${template.bonus ? 'Automatically queued for parent confirmation after five distinct reading days; not manually assignable.' : template.ownership === 'shared' ? 'ONE player per household job. Daily/weekly assignment repeats for this player until deleted.' : 'Assign separately to each player who needs it. Daily/weekly assignment repeats until deleted.'}`;
             document.getElementById('template-date-field').classList.toggle('hidden', !template.scheduled);
             document.getElementById('template-date').disabled = !template.scheduled;
             document.getElementById('template-deploy').disabled = !!template.bonus;
@@ -1138,7 +1317,7 @@
             const kid = activePlayer(chore.assignedTo);
             if (!kid) return 0;
             const day = dayRecord(kid, chore.day);
-            const loss = Math.min(kid.coins, maxPenalty(chore), Math.max(0, day.earned - day.lost));
+            const loss = Math.min(kid.coins, maxPenalty(chore));
             kid.coins -= loss;
             day.lost += loss;
             if (chore.daily && chore.mandatory) day.missed = true;
@@ -1150,7 +1329,7 @@
             return loss;
         }
 
-        function rollDailyQuests() {
+        function rollDailyQuests(persist = true) {
             let changed = false;
             const date = today();
             const next = [];
@@ -1176,7 +1355,7 @@
                 if (!day.required.includes(c.id)) { day.required.push(c.id); changed = true; }
             });
             if (queueReadingBonuses()) changed = true;
-            if (changed) saveToStorage();
+            if (changed && persist) saveToStorage();
             return changed;
         }
 
@@ -1330,7 +1509,7 @@
                 title: chore.bonus ? 'Decline weekly bonus?' : 'Mark task missed?',
                 message: chore.bonus
                     ? `${chore.title} for ${kid.name} (week of ${chore.period}). No award is granted. This weekly decision is retained and cannot be claimed again.`
-                    : `${chore.title} for ${kid.name} on ${chore.day}. No award is granted. The Coin loss is at most ${maxPenalty(chore)} (nominal ${chore.penalty}), bounded by original-day earnings and balance. XP is safe.`,
+                    : `${chore.title} for ${kid.name} on ${chore.day}. No award is granted. The Coin loss is at most ${maxPenalty(chore)} (nominal ${chore.penalty}), deducted from the player's Coin balance. XP is safe.`,
                 confirmLabel: chore.bonus ? 'Decline bonus' : 'Mark missed',
                 icon: chore.bonus ? 'shield-x' : 'alert-triangle',
                 danger: true
@@ -1757,7 +1936,7 @@
         function openAddKidModal() {
             if (!appState.isParentMode) return;
             document.getElementById('kid-name').value = '';
-            document.getElementById('kid-points').value = 0;
+            document.getElementById('kid-points').value = 1000;
             openModal('modal-kid');
         }
 

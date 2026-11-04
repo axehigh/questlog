@@ -62,3 +62,9 @@ The text above is retained as the original rationale; the following decisions su
 - Seed only recurring daily tasks on first use (including optional reading choices). Parent Admin deploys individual templates for existing families and other cadences, always choosing a target. Shared jobs cannot be deployed twice for the same period. Recurring assignments retain their owner; reassignment is an explicit parent action, not automatic rotation. Existing catalogs, empty/deleted lists, history, balances and redemption price snapshots remain authoritative; missing defaults return only on explicit parent import/deployment.
 - Price default perks for roughly **80–200 Coins/day**: Micro 50–150, Mid 350–750, Major 2500–5000. Current defaults are 50–100 / 500–750 / 3000 Coins. Major default is a parent-agreed family-day plan, not promised funding. Cash, paid digital currency, gear and funded outings are **opt-in rewards added/priced by the parent**, with no guaranteed exchange rate. All requests reserve Coins and require parent fulfillment or decline/refund.
 - Keep the static, classic-script app and existing storage key/schema-2 data, with additive cadence/template/reading metadata. Legacy points still migrate equally into XP and Coins with an exact pre-migration backup. No automatic catalog replacement, ledger reset, or history pruning.
+
+---
+
+## Update — 4 November 2026
+
+The penalty decision above is superseded. A miss now deducts the minimum of the player's available Coin balance, the nominal penalty and half the task's Coin award (floor). Losses may come from saved Coins; zero-earning days no longer protect savings. XP remains safe. Fresh/reset starter profiles begin with **1000 Coins**, existing saves keep their balances, and Parent Admin adds a persisted forward-only test clock plus a per-date Day Review.

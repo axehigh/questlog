@@ -89,7 +89,9 @@
 - First run seeds only daily pet/household/tidying tasks and optional reading.
   Personal tasks are per player; shared tasks have ONE named owner, never an
   `all` fanout. Alex gets cat/table; Chris gets dishwasher/trash. Baseline Coins
-  are 80/95 per day, plus optional reading or extra work. Shared weekly vacuuming and
+  are 80/95 per day, plus optional reading or extra work. Starter profiles begin
+  with 1000 Coins on a fresh/reset family; existing saves keep their balances.
+  Shared weekly vacuuming and
   shared cooking/training require explicit parent template deployment; small
   personal optional choices can be selected by the child.
 - Parent Admin deploys source templates individually for existing families too.
@@ -115,15 +117,20 @@
 - There are no ranks, badges, progression bars or multipliers. Lifetime XP only
   increases on task completion; misses, spending, refunds and manual Coin
   adjustments never reduce it. Coins alone buy rewards.
-- A miss deducts the minimum of balance, nominal penalty, half the task's Coin
-  award (floor), and original-day earned Coins minus previous penalties. No flat
-  5-Coin cap. Zero-earning days do not raid savings. The UI distinguishes nominal,
+- A miss deducts the minimum of the player's available Coin balance, nominal
+  penalty and half the task's Coin award (floor). No flat 5-Coin cap; losses can
+  come from saved Coins and never reduce XP. The UI distinguishes nominal,
   maximum potential and actual loss. Direct parent +/-5 Coins is an override.
 - Local midnight expires/repeats dailies; Monday starts new weekly instances,
   on opening/focus/minute refresh. Only mandatory daily expiry auto-fails with a
   bounded penalty. Optional daily/weekly expiry costs nothing. Expired records,
   completed/missed instances and original-date pending reviews remain in history.
   No automatic pruning. Parents can explicitly mark submitted/active work missed.
+- Parent Admin includes a persisted test clock for prototypes: forward-only jumps
+  of at most 30 days at a time, each running the real rollover, saved with family
+  state. Returning to real time is only allowed when the simulated date is not
+  ahead; otherwise reset prototype data. Day Review shows each player's required,
+  completed, not-done and pending work plus Coin gains/losses for one chosen date.
 - `exclusiveGroup: reading` permits one 15 OR 30 minute award per player/local
   day; pending submissions reserve the choice. `readingDays` retains approved
   dates even if an assignment is deleted. Five distinct dates in one Mon–Sun
