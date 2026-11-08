@@ -30,21 +30,18 @@
     ]
   },
   "rewards": [
-    {"id":"car-music","title":"Choose the Car Music for a Week","cost":100,"tier":1,"emoji":"🎵"},
     {"id":"weekend-movie","title":"Pick the Weekend Movie","cost":150,"tier":1,"emoji":"🍿"},
     {"id":"breakfast-pick","title":"Choose Saturday Breakfast","cost":150,"tier":1,"emoji":"🥞"},
+
     {"id":"screen-hour","title":"1 Hour Weekday Screen Time","cost":350,"tier":2,"emoji":"📱"},
-    {"id":"dinner-choice","title":"Choose Friday Night Dinner","cost":500,"tier":2,"emoji":"🍕"},
-    {"id":"movie-snacks","title":"Movie Night with Snacks of Choice","cost":500,"tier":2,"emoji":"🎬"},
     {"id":"new-book","title":"New Book or Comic of Choice","cost":700,"tier":2,"emoji":"📗"},
     {"id":"gaming-extension","title":"+30 Min Weekend Gaming Extension","cost":750,"tier":2,"emoji":"🎮"},
-    {"id":"friend-over","title":"Friend Over or Weekend Sleepover","cost":750,"tier":2,"emoji":"🛌"},
     {"id":"bedtime","title":"+30 Min Weekend Bedtime Buffer","cost":1000,"tier":2,"emoji":"🌙"},
     {"id":"minor-pass","title":"One-Time Minor Chore Pass (Parent Agreed)","cost":1000,"tier":2,"emoji":"🎟️"},
-    {"id":"pocket-money","title":"NOK 50,- Pocket Money","cost":3000,"tier":3,"emoji":"💰"},
-    {"id":"gaming-money","title":"NOK 50,- for Gaming Purchase","cost":3000,"tier":3,"emoji":"🎮"},
-    {"id":"cinema","title":"Cinema Trip","cost":3500,"tier":3,"emoji":"🎟️"},
-    {"id":"day-out","title":"Day Out (Swimming / Bowling / Climbing)","cost":4000,"tier":3,"emoji":"🏊"},
-    {"id":"new-game","title":"New Game of Choice","cost":4500,"tier":3,"emoji":"🎮"}
+
+    {"id":"pocket-money","title":"NOK 50,- Pocket Money","cost":500,"tier":3,"emoji":"💰"},
+    {"id":"gaming-money","title":"NOK 50,- for Gaming Purchase","cost":800,"tier":3,"emoji":"🎮"},
+    {"id":"cinema","title":"Cinema Trip","cost":2000,"tier":3,"emoji":"🎟️"},
+    {"id":"new-game","title":"New Game of Choice","cost":2000,"tier":3,"emoji":"🎮"}
   ]
 }
