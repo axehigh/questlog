@@ -6,11 +6,12 @@
   "chores": {
     "daily": [
       {"id":"cat-care","title":"Refill Cat Food & Fresh Water","points":15,"coins":15,"emoji":"🐱","ownership":"shared","defaultOwner":"k1","seed":true,"mandatory":true,"requiresReview":false},
-      {"id":"tidy-floor","title":"Tidy own Floor","points":20,"coins":20,"emoji":"🧹","ownership":"personal","seed":true,"mandatory":true,"requiresReview":false},
-      {"id":"tidy-desk","title":"Tidy Desk","points":20,"coins":20,"emoji":"🖥️","ownership":"personal","seed":true,"mandatory":true,"requiresReview":false},
       {"id":"dishwasher","title":"Empty Dishwasher","points":30,"coins":30,"emoji":"🍽️","ownership":"shared","defaultOwner":"k2","seed":true,"mandatory":true,"requiresReview":false},
       {"id":"dinner-table","title":"Set & Clear Dinner Table","points":25,"coins":25,"emoji":"🍴","ownership":"shared","defaultOwner":"k1","seed":true,"mandatory":true,"requiresReview":false},
       {"id":"trash","title":"Take Out Trash & Recycling","points":25,"coins":25,"emoji":"🗑️","ownership":"shared","defaultOwner":"k2","seed":true,"mandatory":true,"requiresReview":false},
+
+      {"id":"tidy-floor","title":"Tidy own Floor","points":20,"coins":20,"emoji":"🧹","ownership":"personal","seed":true,"mandatory":true,"requiresReview":false},
+      {"id":"tidy-desk","title":"Tidy Desk","points":20,"coins":20,"emoji":"🖥️","ownership":"personal","seed":true,"mandatory":true,"requiresReview":false},
       {"id":"reading-15","title":"Read Book (15 mins)","points":25,"coins":25,"emoji":"📚","ownership":"personal","seed":true,"mandatory":false,"requiresReview":false,"exclusiveGroup":"reading"},
       {"id":"reading-30","title":"Read Book (30 mins)","points":65,"coins":65,"emoji":"📚","ownership":"personal","seed":true,"mandatory":false,"requiresReview":false,"exclusiveGroup":"reading"}
     ],
